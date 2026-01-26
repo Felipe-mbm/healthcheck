@@ -49,7 +49,7 @@ public class HealthCheckService {
         targetUrl.setLastStatus(isUp ? "UP" : "DOWN");
         urlRepository.save(targetUrl);
 
-        Optional<Outage> openOutage = outageRepository.findByMonitoredUrlAndTimeIsNull(targetUrl);
+        Optional<Outage> openOutage = outageRepository.findByMonitoredUrlAndEndTimeIsNull(targetUrl);
 
         if (!isUp) {
             if (openOutage.isEmpty()) {

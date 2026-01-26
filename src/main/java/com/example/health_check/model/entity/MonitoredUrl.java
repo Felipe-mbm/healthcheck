@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "monitored_url")
+@Table(name = "monitored_urls")
 public class MonitoredUrl {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
