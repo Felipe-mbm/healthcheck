@@ -19,19 +19,19 @@ public class MonitoredUrlService {
         this.mapper = mapper;
     }
 
-    public MonitoredUrlDto.Response register(MonitoredUrlDto.CreatRequest request) {
+    public MonitoredUrlDto.Response register(MonitoredUrlDto.CreateRequest request) {
 
         if (repository.existsByUrl(request.url())) {
-            throw new RuntimeException("URL já cadastrada no sistema!");
+            throw new RuntimeException("URL already registered in the system!");
         }
 
-        MonitoredUrl entidade = mapper.toEntity(request);
-        MonitoredUrl salva = repository.save(entidade);
+        MonitoredUrl entity = mapper.toEntity(request);
+        MonitoredUrl savedEntity = repository.save(entity);
 
-        return mapper.toResponse(salva);
+        return mapper.toResponse(savedEntity);
     }
 
-    public List<MonitoredUrlDto.Response> listarTodas() {
+    public List<MonitoredUrlDto.Response> findAll() {
         return repository.findAll()
                 .stream()
                 .map(mapper::toResponse)

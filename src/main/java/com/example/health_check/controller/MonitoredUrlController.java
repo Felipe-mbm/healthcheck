@@ -22,7 +22,8 @@ public class MonitoredUrlController {
     }
 
     @PostMapping
-    public ResponseEntity<MonitoredUrlDto.Response> register(@RequestBody MonitoredUrlDto.CreatRequest request) {
+    // Atualizado para CreateRequest
+    public ResponseEntity<MonitoredUrlDto.Response> register(@RequestBody MonitoredUrlDto.CreateRequest request) {
         MonitoredUrlDto.Response newUrl = service.register(request);
 
         return ResponseEntity
@@ -32,7 +33,6 @@ public class MonitoredUrlController {
 
     @GetMapping
     public ResponseEntity<List<MonitoredUrlDto.Response>> list() {
-        return ResponseEntity.ok(service.listarTodas());
+        return ResponseEntity.ok(service.findAll());
     }
-
 }

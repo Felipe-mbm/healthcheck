@@ -26,31 +26,30 @@ public class UrlCheckScheduler {
     }
 
     @Scheduled(fixedRate = 60000)
-    public void checarSistemaAutomanticamente() {
-        System.out.println("Iniciando verificação...");
+    public void checkSystemAutomatically() {
+        System.out.println("Starting verification...");
 
         try {
             User systemUser = userRepository.findById(SYSTEM_USER_ID)
-                    .orElseThrow(() -> new RuntimeException("Usuário do sistena não encontrado para logar!"));
+                    .orElseThrow(() -> new RuntimeException("System user not found for logging!"));
 
             List<MonitoredUrl> urls = urlRepository.findAll();
 
             if (urls.isEmpty()) {
-                System.out.println("Nenhuma Url cadastrada para verificar");
+                System.out.println("No URLs registered to check");
                 return;
             }
 
             urls.parallelStream().forEach(url -> {
                 if (Boolean.TRUE.equals(url.getIsActive())) {
-                    healthCheckService.verificarUrl(url, systemUser);
+                    healthCheckService.checkUrl(url, systemUser);
                 }
             });
 
-            System.out.println("Verificação concluida para " + urls.size() + " sites");
+            System.out.println("Verification completed for " + urls.size() + " sites");
         } catch (Exception e) {
-            System.out.println("Falha crítica no agendador: " + e.getMessage());
+            System.out.println("Critical scheduler failure: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
 }

@@ -18,21 +18,20 @@ public class HealthCheckService {
     private final OutageRepository outageRepository;
     private final WebClient webClient;
 
-
     public HealthCheckService(MonitoredUrlRepository urlRepository, OutageRepository outageRepository, WebClient webClient) {
         this.urlRepository = urlRepository;
         this.outageRepository = outageRepository;
         this.webClient = webClient;
     }
 
-    public void verificarUrl(MonitoredUrl urlAlvo, User usuario) {
+    public void checkUrl(MonitoredUrl targetUrl, User user) {
 
-        boolean  isUp = false;
-        String erroDetectado = "";
+        boolean isUp = false;
+        String detectedError = ""; // erroDetectado -> detectedError
 
         try {
             var response = webClient.get()
-                    .uri(urlAlvo.getUrl())
+                    .uri(targetUrl.getUrl())
                     .retrieve()
                     .toBodilessEntity()
                     .block();
@@ -40,33 +39,37 @@ public class HealthCheckService {
             if (response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection()) {
                 isUp = true;
             } else {
-                erroDetectado = "HTTP " + response.getStatusCode().value();
+                detectedError = "HTTP " + response.getStatusCode().value();
             }
         } catch (Exception e) {
-            erroDetectado =  e.getMessage();
+            detectedError = e.getMessage();
         }
 
-        urlAlvo.setLastCheckedAt(LocalDateTime.now());
-        urlAlvo.setLastStatus(isUp ? "UP" : "DOWN");
-        urlRepository.save(urlAlvo);
+        targetUrl.setLastCheckedAt(LocalDateTime.now());
+        targetUrl.setLastStatus(isUp ? "UP" : "DOWN");
+        urlRepository.save(targetUrl);
 
-        Optional<Outage> quedaAberta = outageRepository.findByMonitoredUrlAndTimeIsNull(urlAlvo);
+        Optional<Outage> openOutage = outageRepository.findByMonitoredUrlAndTimeIsNull(targetUrl);
 
         if (!isUp) {
-            if (quedaAberta.isEmpty()) {
-                Outage novaQueda = new Outage();
-                novaQueda.setMonitoredUrl(urlAlvo);
-                novaQueda.setStartTime(LocalDateTime.now());
-                novaQueda.setReason(erroDetectado);
-                outageRepository.save(novaQueda);
-                System.out.println("Site Caiu: " + urlAlvo.getName());
+            if (openOutage.isEmpty()) {
+                Outage newOutage = new Outage(); // novaQueda -> newOutage
+                newOutage.setMonitoredUrl(targetUrl);
+                newOutage.setStartTime(LocalDateTime.now());
+                newOutage.setReason(detectedError);
+                outageRepository.save(newOutage);
+
+                // Log traduzido
+                System.out.println("Site Down: " + targetUrl.getName());
             }
         } else {
-            if (quedaAberta.isPresent()) {
-                Outage queda = quedaAberta.get();
-                queda.setEndTime(LocalDateTime.now());
-                outageRepository.save(queda);
-                System.out.println("Site voltou" + urlAlvo.getName());
+            if (openOutage.isPresent()) {
+                Outage outage = openOutage.get(); // queda -> outage
+                outage.setEndTime(LocalDateTime.now());
+                outageRepository.save(outage);
+
+                // Log traduzido
+                System.out.println("Site Back Up: " + targetUrl.getName());
             }
         }
     }

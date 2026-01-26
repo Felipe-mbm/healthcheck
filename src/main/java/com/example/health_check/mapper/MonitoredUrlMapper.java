@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MonitoredUrlMapper {
 
-    public MonitoredUrl toEntity(MonitoredUrlDto.CreatRequest request) {
+    public MonitoredUrl toEntity(MonitoredUrlDto.CreateRequest request) {
         MonitoredUrl entity = new MonitoredUrl();
         entity.setName(request.name());
         entity.setUrl(request.url());

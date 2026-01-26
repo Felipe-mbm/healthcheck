@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class MonitoredUrlDto {
 
-    public record CreatRequest(
+    public record CreateRequest(
             String name,
             String url
     ) {}
