@@ -1,4 +1,4 @@
-# Health Check System
+# Healthcheck
 
 Sistema interno para monitoramento automatizado de **disponibilidade de URLs**. O projeto verifica periodicamente se sites cadastrados estão operacionais e registra o histórico de quedas (*downtime*).
 
