@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "monitor_logs")
-public class MonitorLogs {
+public class MonitorLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     private String status;
@@ -29,6 +29,6 @@ public class MonitorLogs {
     private MonitoredUrl monitoredUrl;
 
     @ManyToOne
-    @JoinColumn(name = "client_id", nullable = false)
-    private ClientConfig clientConfig;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User userId;
 }

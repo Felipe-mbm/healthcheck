@@ -14,17 +14,14 @@ import java.time.LocalDateTime;
 @Table(name = "monitored_urls")
 public class MonitoredUrl {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    @Column(name = "nome")
+    @Column(name = "name")
     private String name;
 
     @Column(nullable = false)
     private String url;
-
-    @Column(name = "check_interval", nullable = false)
-    private Integer checkInterval;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
