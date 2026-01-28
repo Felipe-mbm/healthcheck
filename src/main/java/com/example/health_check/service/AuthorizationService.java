@@ -5,7 +5,9 @@ import com.example.health_check.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
+@Service
 public class AuthorizationService implements UserDetailsService {
 
     private final UserRepository repository;
@@ -19,7 +21,7 @@ public class AuthorizationService implements UserDetailsService {
         User userDetails = repository.findByEmail(email);
         if (userDetails == null)
             throw new UsernameNotFoundException("User not found");
-        return null;
+        return userDetails;
     }
 
 }
