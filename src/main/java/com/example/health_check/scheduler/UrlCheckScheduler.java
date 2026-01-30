@@ -20,7 +20,7 @@ public class UrlCheckScheduler {
         this.urlRepository = urlRepository;
         this.healthCheckService = healthCheckService;
     }
-    
+
     @Scheduled(fixedRate = 60000)
     public void checkSystemAutomatically() {
         System.out.println("Starting verification...");
