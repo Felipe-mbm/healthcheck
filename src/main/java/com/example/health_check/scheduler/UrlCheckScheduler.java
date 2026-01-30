@@ -14,24 +14,18 @@ import java.util.List;
 public class UrlCheckScheduler {
 
     private final MonitoredUrlRepository urlRepository;
-    private final UserRepository userRepository;
     private final HealthCheckService healthCheckService;
 
-    private final String SYSTEM_USER_ID = "1";
-
-    public UrlCheckScheduler(MonitoredUrlRepository urlRepository, UserRepository userRepository, HealthCheckService healthCheckService) {
+    public UrlCheckScheduler(MonitoredUrlRepository urlRepository, HealthCheckService healthCheckService) {
         this.urlRepository = urlRepository;
-        this.userRepository = userRepository;
         this.healthCheckService = healthCheckService;
     }
-
+    
     @Scheduled(fixedRate = 60000)
     public void checkSystemAutomatically() {
         System.out.println("Starting verification...");
 
         try {
-            User systemUser = userRepository.findById(SYSTEM_USER_ID)
-                    .orElseThrow(() -> new RuntimeException("System user not found for logging!"));
 
             List<MonitoredUrl> urls = urlRepository.findAll();
 
@@ -42,7 +36,7 @@ public class UrlCheckScheduler {
 
             urls.parallelStream().forEach(url -> {
                 if (Boolean.TRUE.equals(url.getIsActive())) {
-                    healthCheckService.checkUrl(url, systemUser);
+                    healthCheckService.checkUrl(url);
                 }
             });
 

@@ -24,7 +24,7 @@ public class HealthCheckService {
         this.webClient = webClient;
     }
 
-    public void checkUrl(MonitoredUrl targetUrl, User user) {
+    public void checkUrl(MonitoredUrl targetUrl) {
 
         boolean isUp = false;
         String detectedError = "";
