@@ -1,184 +1,296 @@
-# Healthcheck
+# HealthCheck API
 
-Sistema interno para monitoramento automatizado de **disponibilidade de URLs**. O projeto verifica periodicamente se sites cadastrados estão operacionais e registra o histórico de quedas (*downtime*).
+## 📌 Visão Geral
 
-> **Nota:** Este é um sistema utilitário para gestão de infraestrutura, focado em **monitoramento passivo**.
+O **HealthCheck** é uma API RESTful profissional para **monitoramento automatizado de disponibilidade de URLs**, desenvolvida em **Java 21** com **Spring Boot 3.4.1**. O sistema realiza verificações periódicas em URLs cadastradas, identifica quedas (downtime), registra incidentes de forma inteligente e mantém um histórico confiável de indisponibilidade.
 
----
-
-## 📋 Regras de Negócio e Funcionamento
-
-### 1. Permissões e Acesso
-
-O sistema implementa controle de acesso restrito baseado em **roles**:
-
-- **ADMIN**  
-  Usuário com privilégios elevados. É o único capaz de:
-  - Cadastrar novas URLs para monitoramento
-  - Remover URLs existentes
-  - Gerenciar o cadastro de usuários
-
-- **USER**  
-  Usuário padrão com acesso **somente leitura**:
-  - Pode visualizar o status dos serviços
-  - Não pode alterar configurações de monitoramento
+O projeto foi pensado com **foco em arquitetura limpa, segurança, escalabilidade e boas práticas corporativas**, seguindo princípios **SOLID**, separação clara de responsabilidades e padrões amplamente utilizados em ambientes de produção.
 
 ---
 
-### 2. Ciclo de Monitoramento (Scheduler)
+## 🏗️ Arquitetura do Sistema
 
-O sistema opera em ciclos automáticos de verificação:
+A aplicação segue o **padrão de arquitetura em camadas**, garantindo baixo acoplamento e alta manutenibilidade:
 
-- **Intervalo:** 60 segundos (1 minuto)
-- **Execução:**
-  - O sistema busca todas as URLs ativas
-  - Executa requisições HTTP de forma simultânea (processamento paralelo)
-- **Delay:**
-  - Fixo no agendador
-  - Evita sobrecarga do servidor e loops descontrolados
+- **Controller**: Exposição das rotas REST
+- **Service**: Regras de negócio e orquestração
+- **Repository**: Persistência de dados
+- **Entity (Model)**: Representação do domínio
+
+### 🔐 Segurança e Autenticação
+
+- **Spring Security** com autenticação **Stateless**
+- **JWT (JSON Web Token)** utilizando **Auth0 Java-JWT**
+- Assinatura com algoritmo **HMAC256**
+- Tokens interceptados e validados via `SecurityFilter`
+- Senhas criptografadas com **BCryptPasswordEncoder**
+
+Fluxo resumido:
+1. Usuário realiza login
+2. Token JWT é gerado
+3. Token é enviado no header `Authorization: Bearer <token>`
+4. O filtro valida e autentica a requisição
+
+### 🛂 Controle de Acesso (RBAC)
+
+Controle de acesso baseado em **Roles** (`UserRole`):
+
+| Role  | Permissões |
+|------|-----------|
+| ADMIN | Criar, listar e deletar usuários e URLs |
+| USER  | Apenas listar recursos |
+
+As permissões são aplicadas diretamente nas rotas via Spring Security.
 
 ---
 
-### 3. Gestão de Incidentes (Outages)
+## ⏱️ Monitoramento Automatizado (Scheduler)
 
-O sistema evita a criação de logs repetitivos ("spam" de verificações bem-sucedidas). A persistência de dados é baseada **exclusivamente em mudanças de estado**:
+O coração do sistema é o **`UrlCheckScheduler`**:
 
-- **Status UP (Online)**
-  - Atualiza apenas o campo `last_checked_at`
-  - Nenhum registro novo é criado
+- Executado automaticamente a cada **60 segundos**
+- Implementado com `@Scheduled(fixedRate = 60000)`
+- Recupera todas as URLs cadastradas no banco
+- Executa verificações simultâneas usando `parallelStream()`
 
-- **Status DOWN (Offline)**
-  - Cria um novo registro na tabela `outages`
-  - Marca o início do incidente (`start_time`)
+### 🌐 Lógica de Verificação
 
-- **Recuperação (Back Online)**
-  - Localiza o incidente aberto
-  - Preenche o horário de fim (`end_time`)
-  - Encerra o registro da queda
+A verificação é realizada pelo **`HealthCheckService`**, utilizando **WebClient reativo**:
+
+- **Status 2xx ou 3xx** → URL considerada **UP**
+- **Qualquer outro status ou exceção** (timeout, DNS, conexão) → **DOWN**
+
+### 🧠 Persistência Inteligente de Falhas
+
+O sistema evita registros duplicados:
+
+- Um registro em `outages` é criado **somente quando uma nova falha é detectada**
+- Se a URL continuar indisponível, **nenhum novo registro é criado**
+- Quando o site volta ao ar:
+  - A falha aberta é localizada
+  - O campo `end_time` é preenchido
+  - O incidente é encerrado corretamente
+
+Isso garante **histórico confiável de downtime**, sem ruído ou dados inflados.
 
 ---
 
-## 🗄️ Estrutura do Banco de Dados
+## 🗄️ Banco de Dados e Migrações
 
-O sistema utiliza **PostgreSQL** com versionamento de schema via **Flyway**.
+- **PostgreSQL** como banco relacional
+- **Flyway** para versionamento e controle de schema
 
-A tabela `outages` possui uma **chave estrangeira** ligada à tabela `monitored_urls`. Caso uma URL seja removida por um usuário **ADMIN**, todo o histórico de quedas associado é removido automaticamente (**Cascade**).
+### Estrutura de Tabelas
 
-### Diagrama Entidade-Relacionamento
+- `users`
+- `monitored_urls`
+- `outages`
 
-```mermaid
-erDiagram
-    USERS {
-        UUID id PK
-        String email
-        String role "ADMIN/USER"
-    }
-    MONITORED_URLS {
-        UUID id PK
-        String name
-        String url
-        Boolean is_active
-        String last_status
-    }
-    OUTAGES {
-        UUID id PK
-        UUID url_id FK
-        Timestamp start_time
-        Timestamp end_time
-        String reason
-    }
-    MONITORED_URLS ||--o{ OUTAGES : "possui"
+### Migrações
+
+- **V1__init.sql**
+  - Criação das tabelas
+  - Integridade referencial
+  - `CASCADE DELETE` para remover outages ao deletar URLs
+
+- **V2__Add_password_to_users.sql**
+  - Adiciona coluna `password` para autenticação segura
+
+As migrações são executadas automaticamente na inicialização da aplicação.
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+src/main/java
+├── config
+│   ├── AppConfig
+│   ├── SecurityConfig
+│   └── SecurityFilter
+│
+├── controller
+│   ├── AuthController
+│   ├── UserController
+│   └── MonitoredUrlController
+│
+├── dto
+│   ├── AuthenticationDto
+│   └── UserDto
+│
+├── mapper
+│   ├── UserMapper
+│   └── MonitoredUrlMapper
+│
+├── model
+│   ├── entity
+│   │   ├── User
+│   │   ├── MonitoredUrl
+│   │   └── Outage
+│   └── enums
+│       └── UserRole
+│
+├── repository
+│   ├── UserRepository
+│   ├── MonitoredUrlRepository
+│   └── OutageRepository
+│
+├── scheduler
+│   └── UrlCheckScheduler
+│
+├── service
+│   ├── HealthCheckService
+│   ├── TokenService
+│   └── UserService
+│
+└── resources
+    └── db/migration
 ```
 
 ---
 
-## 🚀 Guia de Configuração (Local)
+## 🚀 Guia de Instalação e Execução
 
-### 1. Banco de Dados (Docker)
+### 1️⃣ Clonar o Repositório
 
-O projeto possui um arquivo `docker-compose.yml` na raiz. Para subir a infraestrutura local:
+O desenvolvimento ocorre na branch **develop**:
+
+```bash
+git clone -b develop https://github.com/felipe-mbm/healthcheck.git
+cd healthcheck
+```
+
+### 2️⃣ Subir o Banco de Dados
+
+O projeto possui `docker-compose.yml` configurado:
 
 ```bash
 docker-compose up -d
 ```
 
+- PostgreSQL 15 Alpine
+- Porta: `5432`
+- Banco padrão: `healthcheck_db`
+- Volume persistente: `postgres-data`
+
+### 3️⃣ Configurar Variáveis de Ambiente
+
+Antes de rodar a aplicação, configure:
+
+```env
+DATABASE_URL=jdbc:postgresql://localhost:5432/healthcheck_db
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_LOCATION=classpath:db/migration
+JWT_SECRET=sua-chave-secreta-jwt
+```
+
+> ⚠️ **Nunca versionar credenciais no repositório**
+
+### 4️⃣ Executar a Aplicação
+
+Com **Java 21** instalado:
+
+```bash
+./mvnw spring-boot:run
+```
+
+O Flyway aplicará automaticamente as migrações ao iniciar.
+
 ---
 
-### 2. Variáveis de Ambiente (IntelliJ IDEA)
+## 🧪 Guia de Testes (Postman)
 
-Este projeto **não utiliza arquivo `.env` físico**, evitando exposição de credenciais. As variáveis devem ser configuradas diretamente na IDE.
+### ⚠️ Criação do Primeiro Admin
 
-#### Passo a passo:
-
-1. No IntelliJ, acesse **Edit Configurations...**
-2. Selecione a aplicação `HealthCheckApplication`
-3. No campo **Environment Variables**, configure:
-
-| Variável | Descrição | Exemplo (Dev) |
-|--------|----------|---------------|
-| DATABASE_URL | URL JDBC | jdbc:postgresql://localhost:5432/health_check_db |
-| DATABASE_USERNAME | Usuário do banco | <SEU_USUARIO_LOCAL> |
-| DATABASE_PASSWORD | Senha do banco | <SUA_SENHA_LOCAL> |
-| DATABASE_LOCATION | Caminho das migrations | classpath:db/migration |
-
----
-
-### 3. Configuração Inicial (Bootstrap)
-
-O banco de dados inicia **vazio**. Para que o **Scheduler** funcione, é obrigatório criar manualmente um usuário **ADMIN**.
-
-Execute no banco:
+A rota de criação de usuários é protegida. Crie o primeiro ADMIN manualmente:
 
 ```sql
--- 1. Inserir usuário Admin
-INSERT INTO users (email, role, check_interval)
-VALUES ('admin@system.com', 'ADMIN', 1);
-
--- 2. Recuperar o ID gerado
-SELECT id FROM users WHERE email = 'admin@system.com';
+INSERT INTO users (id, email, password, role, check_interval)
+VALUES (
+  gen_random_uuid(),
+  'admin@test.com',
+  '$2a$10$HASH_GERADO_PELO_BCRYPT',
+  'ADMIN',
+  1
+);
 ```
 
-⚠️ **Configuração de Código:**  
-Copie o UUID retornado no passo 2 e atualize a constante `SYSTEM_USER_ID` na classe:
-
-```
-UrlCheckScheduler.java
-```
+> Alternativamente, libere temporariamente a rota `/users` no `SecurityConfig`.
 
 ---
 
-## 📡 Endpoints Principais
+### 🔑 Autenticação
 
-### Cadastrar URL (ADMIN)
-
-- **Método:** `POST`
-- **Endpoint:** `/urls`
+**POST** `/auth/login`
 
 ```json
 {
-  "name": "Nome do Sistema",
-  "url": "https://sistema.exemplo.com"
+  "email": "admin@test.com",
+  "password": "123"
+}
+```
+
+Resposta:
+```json
+{ "token": "eyJhbGciOi..." }
+```
+
+Use este token como **Bearer Token** nas próximas requisições.
+
+---
+
+### 👤 Gerenciamento de Usuários (ADMIN)
+
+- **Criar usuário**: `POST /users`
+- **Listar usuários**: `GET /users`
+- **Deletar usuário**: `DELETE /users/{id}`
+
+```json
+{
+  "email": "user@test.com",
+  "password": "123",
+  "role": "USER"
 }
 ```
 
 ---
 
-### Consultar Status
+### 🌍 Gerenciamento de URLs (ADMIN)
 
-- **Método:** `GET`
-- **Endpoint:** `/urls`
+- **Cadastrar URL**: `POST /urls`
+- **Listar URLs**: `GET /urls`
 
-Retorna a lista de sites monitorados com:
-- Status atual (`UP` / `DOWN`)
-- Data da última verificação
+```json
+{
+  "name": "Google",
+  "url": "https://google.com"
+}
+```
+
+Os campos `lastStatus` e `lastCheckedAt` são atualizados automaticamente pelo Scheduler.
+
+### 🔻 Simular Queda
+
+- Cadastre uma URL inválida
+- Aguarde 1 minuto
+- Consulte:
+  - Logs da aplicação
+  - Tabela `outages` no banco
 
 ---
 
-## 🛠️ Tecnologias
+## ✅ Status do Projeto
 
-- Java 21
-- Spring Boot 3
-- PostgreSQL
-- Docker
-- Flyway
+✔ Arquitetura sólida
+✔ Segurança corporativa
+✔ Monitoramento automático
+✔ Persistência confiável de falhas
+✔ Pronto para ambientes reais
+
+---
+
+## 📄 Licença
+
+Este projeto é de uso educacional e interno. Adapte conforme a política da sua organização.
 
