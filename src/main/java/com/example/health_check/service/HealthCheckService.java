@@ -5,7 +5,6 @@ import com.example.health_check.model.entity.Outage;
 import com.example.health_check.model.entity.User;
 import com.example.health_check.repository.MonitoredUrlRepository;
 import com.example.health_check.repository.OutageRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -25,13 +24,13 @@ public class HealthCheckService {
         this.webClient = webClient;
     }
 
-    public void checkUrl(MonitoredUrl targetUrl) {
+    public void checkUrl(MonitoredUrl targetUrl, User user) {
 
         boolean isUp = false;
-        String detectedError = "";
+        String detectedError = ""; // erroDetectado -> detectedError
 
         try {
-            ResponseEntity<Void> response = webClient.get()
+            var response = webClient.get()
                     .uri(targetUrl.getUrl())
                     .retrieve()
                     .toBodilessEntity()
@@ -54,20 +53,22 @@ public class HealthCheckService {
 
         if (!isUp) {
             if (openOutage.isEmpty()) {
-                Outage newOutage = new Outage();
+                Outage newOutage = new Outage(); // novaQueda -> newOutage
                 newOutage.setMonitoredUrl(targetUrl);
                 newOutage.setStartTime(LocalDateTime.now());
                 newOutage.setReason(detectedError);
                 outageRepository.save(newOutage);
 
+                // Log traduzido
                 System.out.println("Site Down: " + targetUrl.getName());
             }
         } else {
             if (openOutage.isPresent()) {
-                Outage outage = openOutage.get();
+                Outage outage = openOutage.get(); // queda -> outage
                 outage.setEndTime(LocalDateTime.now());
                 outageRepository.save(outage);
 
+                // Log traduzido
                 System.out.println("Site Back Up: " + targetUrl.getName());
             }
         }

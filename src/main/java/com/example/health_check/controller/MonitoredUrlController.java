@@ -22,6 +22,7 @@ public class MonitoredUrlController {
     }
 
     @PostMapping
+    // Atualizado para CreateRequest
     public ResponseEntity<MonitoredUrlDto.Response> register(@RequestBody MonitoredUrlDto.CreateRequest request) {
         MonitoredUrlDto.Response newUrl = service.register(request);
 
