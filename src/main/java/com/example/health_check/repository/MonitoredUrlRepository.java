@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MonitoredUrlRepository extends JpaRepository<MonitoredUrl, String> {
-
     boolean existsByUrl(String url);
 }
