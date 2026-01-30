@@ -22,7 +22,6 @@ public class UserService {
     public UserDto.Response register(UserDto.CreateRequest request) {
         if (userRepository.findAll().stream().anyMatch(u -> u.getEmail().equals(request.email())))
             throw new RuntimeException("Email already registered!");
-
         User user = userMapper.toEntity(request);
         return userMapper.toResponse(userRepository.save(user));
     }

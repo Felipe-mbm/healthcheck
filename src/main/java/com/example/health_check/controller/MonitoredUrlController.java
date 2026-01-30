@@ -14,11 +14,9 @@ import java.util.List;
 public class MonitoredUrlController {
 
     private final MonitoredUrlService service;
-    private final HealthCheckService healthCheckService;
 
-    public MonitoredUrlController(MonitoredUrlService service, HealthCheckService healthCheckService) {
+    public MonitoredUrlController(MonitoredUrlService service) {
         this.service = service;
-        this.healthCheckService = healthCheckService;
     }
 
     @PostMapping

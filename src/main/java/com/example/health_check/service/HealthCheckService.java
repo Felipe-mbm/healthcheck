@@ -27,7 +27,7 @@ public class HealthCheckService {
     public void checkUrl(MonitoredUrl targetUrl, User user) {
 
         boolean isUp = false;
-        String detectedError = ""; // erroDetectado -> detectedError
+        String detectedError = "";
 
         try {
             var response = webClient.get()
@@ -53,22 +53,20 @@ public class HealthCheckService {
 
         if (!isUp) {
             if (openOutage.isEmpty()) {
-                Outage newOutage = new Outage(); // novaQueda -> newOutage
+                Outage newOutage = new Outage();
                 newOutage.setMonitoredUrl(targetUrl);
                 newOutage.setStartTime(LocalDateTime.now());
                 newOutage.setReason(detectedError);
                 outageRepository.save(newOutage);
 
-                // Log traduzido
                 System.out.println("Site Down: " + targetUrl.getName());
             }
         } else {
             if (openOutage.isPresent()) {
-                Outage outage = openOutage.get(); // queda -> outage
+                Outage outage = openOutage.get();
                 outage.setEndTime(LocalDateTime.now());
                 outageRepository.save(outage);
 
-                // Log traduzido
                 System.out.println("Site Back Up: " + targetUrl.getName());
             }
         }

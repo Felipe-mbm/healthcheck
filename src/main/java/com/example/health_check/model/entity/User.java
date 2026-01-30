@@ -38,12 +38,10 @@ public class User implements UserDetails {
     @Column(name = "last_active_at")
     private LocalDateTime lastActiveAt;
 
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.userRole == UserRole.ADMIN) {
+        if (this.userRole == UserRole.ADMIN)
             return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
-        }
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
