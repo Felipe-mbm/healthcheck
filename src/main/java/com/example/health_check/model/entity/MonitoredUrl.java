@@ -32,4 +32,7 @@ public class MonitoredUrl {
 
     @Column(name = "last_checked_at")
     private LocalDateTime lastCheckedAt;
+
+    @Column(name = "response_time_ms")
+    private Long responseTimeMs;
 }

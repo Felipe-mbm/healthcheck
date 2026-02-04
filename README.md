@@ -163,6 +163,29 @@ UrlCheckScheduler.java
 
 ---
 
+
+## 📡 Endpoints e Testes
+### 1. Gerenciamento de URLs (Somente ADMIN)
+- **Cadastrar URL:** `POST /urls`
+- **Consultar Status:** `GET /urls` — Retorna o status atual `(UP/DOWN)` e a última verificação.
+- **Remover URL:** `DELETE /urls/{id}` — Remove a URL e, via Cascade, deleta todo o histórico de quedas associado.
+
+### 2. Histórico de Incidentes (Outages)
+- **Listar Quedas:** `GET /outages` — Retorna todos os registros de indisponibilidade.
+- **Filtrar por URL:** `GET /outages/url/{urlId}` — Lista as quedas específicas de um serviço para análise de SLA.
+
+### 3. Gestão de Usuários (Somente ADMIN)
+- **Listar Usuários:** `GET /users`
+- **Criar Usuário:** `POST /users` — Permite cadastrar novos perfis `ADMIN` ou `USER`.
+
+## 🛠 Como validar a lógica de Outage?
+Para testar se o sistema está registrando as quedas corretamente como você descreveu:
+- **Cenário de Queda:** Cadastre uma `URL` inválida ou desligue a internet. O sistema criará um registro em outages com o `start_time`.
+- **Cenário de Recuperação:** Volte a `URL` ao ar. O sistema deve localizar o registro aberto e preencher automaticamente o `end_time`, sem criar uma nova linha.
+- **Persistência:** Verifique no banco que, enquanto o site estiver `UP`, apenas o `last_checked_at` da tabela principal é atualizado, evitando spam de dados.
+
+---
+
 ### Consultar Status
 
 - **Método:** `GET`
