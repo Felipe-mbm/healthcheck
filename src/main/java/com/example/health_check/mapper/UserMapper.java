@@ -9,19 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    private final PasswordEncoder passwordEncoder;
-
-    public UserMapper(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
-    }
-
     public User toEntity(UserDto.CreateRequest request) {
         User user = new User();
         user.setEmail(request.email());
-        user.setPassword(passwordEncoder.encode(request.password()));
         user.setUserRole(request.role() != null ? request.role() : UserRole.USER);
-        user.setCheckInterval(request.checkInterval() != null ? request.checkInterval() : 1);
-
         return user;
     }
 
@@ -30,7 +21,6 @@ public class UserMapper {
                 entity.getId(),
                 entity.getEmail(),
                 entity.getUserRole(),
-                entity.getCheckInterval(),
                 entity.getLastActiveAt()
         );
     }

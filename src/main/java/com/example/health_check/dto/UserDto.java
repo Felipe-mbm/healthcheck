@@ -12,21 +12,13 @@ public class UserDto {
             @NotBlank(message = "Email is required")
             @Email(message = "Invalid email format")
             String email,
-            @NotBlank(message = "Password is required")
-            String password,
-            UserRole role,
-            Integer checkInterval
-    ) {}
-
-    public record UpdateSettingsRequest(
-            Integer checkInterval
+            UserRole role
     ) {}
 
     public record Response(
             String id,
             String email,
             UserRole role,
-            int checkInterval,
             LocalDateTime lastActiveAt
     ) {}
 }
