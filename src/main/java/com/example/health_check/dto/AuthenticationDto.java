@@ -5,5 +5,5 @@ import jakarta.validation.constraints.NotBlank;
 
 public record AuthenticationDto(
     @NotBlank(message = "The Google token is required.")
-    String credentials
+    String credential
     ) {}
