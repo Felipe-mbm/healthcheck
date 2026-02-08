@@ -32,4 +32,7 @@ public class MonitoredUrl {
 
     @Column(name = "last_checked_at")
     private LocalDateTime lastCheckedAt;
+
+    @OneToMany(mappedBy = "monitoredUrl", fetch = FetchType.LAZY)
+    private java.util.List<Outage> outages;
 }

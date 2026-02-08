@@ -1,9 +1,7 @@
 package com.example.health_check.scheduler;
 
 import com.example.health_check.model.entity.MonitoredUrl;
-import com.example.health_check.model.entity.User;
 import com.example.health_check.repository.MonitoredUrlRepository;
-import com.example.health_check.repository.UserRepository;
 import com.example.health_check.service.HealthCheckService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -21,12 +19,12 @@ public class UrlCheckScheduler {
         this.healthCheckService = healthCheckService;
     }
 
-    @Scheduled(fixedRate = 60000)
+    // Alterado: removido fixedRate fixo e adicionado fixedRateString apontando para a propriedade
+    @Scheduled(fixedRateString = "${app.scheduler.interval}")
     public void checkSystemAutomatically() {
         System.out.println("Starting verification...");
 
         try {
-
             List<MonitoredUrl> urls = urlRepository.findAll();
 
             if (urls.isEmpty()) {

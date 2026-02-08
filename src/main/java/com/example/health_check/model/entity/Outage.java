@@ -27,4 +27,14 @@ public class Outage {
 
     @Column(name = "reason")
     private String reason;
-}
+
+    public long getDurationInMinutes() {
+        if (this.startTime == null) {
+            return 0;
+        }
+        LocalDateTime end = (this.endTime != null) ? this.endTime : LocalDateTime.now();
+
+        return java.time.Duration.between(this.startTime, end).toMinutes();
+    }
+    }
+
