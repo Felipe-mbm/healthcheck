@@ -11,7 +11,7 @@ public class UrlStatistics {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @OneToOne // Cada URL tem sua própria linha de estatística
+    @OneToOne
     @JoinColumn(name = "url_id", nullable = false)
     private MonitoredUrl monitoredUrl;
 

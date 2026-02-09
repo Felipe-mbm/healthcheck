@@ -73,9 +73,8 @@ public class HealthCheckService {
             if (openOutage.isPresent()) {
                 Outage outage = openOutage.get();
                 outage.setEndTime(LocalDateTime.now());
-                outageRepository.save(outage); // Primeiro fecha a queda
+                outageRepository.save(outage);
 
-                // Calcula e salva a estatística IMEDIATAMENTE
                 long secondsDown = Duration.between(outage.getStartTime(), outage.getEndTime()).toSeconds();
 
                 UrlStatistics stats = urlStatisticsRepository.findByMonitoredUrl(targetUrl)
@@ -87,7 +86,7 @@ public class HealthCheckService {
 
                 stats.setTotalOutages(stats.getTotalOutages() + 1);
                 stats.setTotalDowntimeSeconds(stats.getTotalDowntimeSeconds() + secondsDown);
-                urlStatisticsRepository.save(stats); // Garante a persistência
+                urlStatisticsRepository.save(stats);
 
                 System.out.println("Estatística atualizada: " + secondsDown + " segundos acumulados.");
             }

@@ -19,7 +19,6 @@ public class UrlCheckScheduler {
         this.healthCheckService = healthCheckService;
     }
 
-    // Alterado: removido fixedRate fixo e adicionado fixedRateString apontando para a propriedade
     @Scheduled(fixedRateString = "${app.scheduler.interval}")
     public void checkSystemAutomatically() {
         System.out.println("Starting verification...");
