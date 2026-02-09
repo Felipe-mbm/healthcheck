@@ -6,6 +6,7 @@ import com.example.health_check.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,9 +29,7 @@ public class HealthCheckApplication {
 				User admin = new User();
 				// Remova o setId manual para evitar o conflito de transação
 				admin.setEmail(email);
-				admin.setPassword(passwordEncoder.encode("123456"));
 				admin.setUserRole(UserRole.ADMIN);
-				admin.setCheckInterval(1);
 
 				userRepository.save(admin);
 				System.out.println(">>> Usuário ADMIN criado com sucesso via Código.");

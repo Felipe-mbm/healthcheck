@@ -1,4 +1,9 @@
 package com.example.health_check.dto;
 
-public record AuthenticationDto(String email, String password) {
-}
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+public record AuthenticationDto(
+    @NotBlank(message = "The Google token is required.")
+    String credential
+    ) {}

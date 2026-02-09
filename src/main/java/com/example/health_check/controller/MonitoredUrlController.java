@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
-import static org.apache.catalina.manager.StatusTransformer.formatSeconds;
-
 @RestController
 @RequestMapping("/urls")
 public class MonitoredUrlController {
@@ -23,9 +21,8 @@ public class MonitoredUrlController {
     private final MonitoredUrlService service;
     private final HealthCheckService healthCheckService;
     private final UrlStatisticsRepository urlStatisticsRepository;
-    private final MonitoredUrlRepository urlRepository; // Adicionado: campo necessário para o findById
+    private final MonitoredUrlRepository urlRepository;
 
-    // Construtor atualizado: Injetando todos os componentes necessários
     public MonitoredUrlController(MonitoredUrlService service,
                                   HealthCheckService healthCheckService,
                                   UrlStatisticsRepository urlStatisticsRepository,
@@ -39,7 +36,6 @@ public class MonitoredUrlController {
     @PostMapping
     public ResponseEntity<MonitoredUrlDto.Response> register(@RequestBody MonitoredUrlDto.CreateRequest request) {
         MonitoredUrlDto.Response newUrl = service.register(request);
-
         return ResponseEntity
                 .created(URI.create("/urls/" + newUrl.id()))
                 .body(newUrl);
@@ -61,20 +57,27 @@ public class MonitoredUrlController {
                     return newStats;
                 });
 
-        // Criamos o DTO com o tempo formatado
         UrlStatisticsDto response = new UrlStatisticsDto(
                 url.getId(),
                 url.getName(),
                 stats.getTotalOutages(),
                 stats.getTotalDowntimeSeconds(),
-                formatSeconds(stats.getTotalDowntimeSeconds()) // Chama a formatação
+                formatSeconds(stats.getTotalDowntimeSeconds())
         );
 
         return ResponseEntity.ok(response);
     }
+
     private String formatSeconds(long totalSeconds) {
         long hours = totalSeconds / 3600;
         long minutes = (totalSeconds % 3600) / 60;
         long seconds = totalSeconds % 60;
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }}
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}

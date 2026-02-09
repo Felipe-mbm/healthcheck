@@ -38,7 +38,7 @@ public class HealthCheckService {
         String detectedError = "";
 
         try {
-            ResponseEntity<Void> response = webClient.get()
+            var response = webClient.get()
                     .uri(targetUrl.getUrl())
                     .retrieve()
                     .toBodilessEntity()

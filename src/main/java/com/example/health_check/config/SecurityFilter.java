@@ -1,6 +1,7 @@
-package com.example.health_check.security;
+package com.example.health_check.config;
 
 import com.example.health_check.repository.UserRepository;
+import com.example.health_check.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,23 +20,23 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Autowired
     TokenService tokenService;
-
     @Autowired
     UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
         String token = this.recoverToken(request);
 
-        if(token != null) {
+        if (token != null) {
             String login = tokenService.validateToken(token);
 
-            if(!login.isEmpty()) {
-                UserDetails user = userRepository.findByEmail(login);
+            if (!login.isEmpty()) {
+                UserDetails user = userRepository.findByEmail(login).orElseThrow();
 
-                if(user != null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (user != null) {
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
         }
@@ -44,7 +45,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private String recoverToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        if(authHeader == null) return null;
+        if (authHeader == null) return null;
         return authHeader.replace("Bearer ", "");
     }
 }

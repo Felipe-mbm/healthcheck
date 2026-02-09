@@ -1,3 +1,6 @@
+ALTER TABLE users ADD COLUMN password VARCHAR(255);
+
+ALTER TABLE users ALTER COLUMN password SET NOT NULL;
 -- 1. Garante que a coluna password exista
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);
 

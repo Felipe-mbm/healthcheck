@@ -37,4 +37,10 @@ public class MonitoredUrlService {
                 .map(mapper::toResponse)
                 .toList();
     }
+
+    public void delete(String id) {
+        if (!repository.existsById(id))
+            throw new RuntimeException("Not found URL");
+        repository.deleteById(id);
+    }
 }
