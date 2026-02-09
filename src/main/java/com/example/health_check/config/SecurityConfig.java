@@ -1,5 +1,6 @@
 package com.example.health_check.config;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/urls").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/urls/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/urls").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/urls/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -45,5 +46,10 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

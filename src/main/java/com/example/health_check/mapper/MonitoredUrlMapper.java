@@ -11,18 +11,18 @@ public class MonitoredUrlMapper {
         MonitoredUrl entity = new MonitoredUrl();
         entity.setName(request.name());
         entity.setUrl(request.url());
-
         return entity;
     }
 
-    public MonitoredUrlDto.Response toResponse(MonitoredUrl entity) {
+    public MonitoredUrlDto.Response toResponse(MonitoredUrl entity, long totalDowntime) {
         return new MonitoredUrlDto.Response(
                 entity.getId(),
                 entity.getName(),
                 entity.getUrl(),
                 entity.getIsActive() != null ? entity.getIsActive() : true,
                 entity.getLastStatus(),
-                entity.getLastCheckedAt()
+                entity.getLastCheckedAt(),
+                totalDowntime
         );
     }
 }

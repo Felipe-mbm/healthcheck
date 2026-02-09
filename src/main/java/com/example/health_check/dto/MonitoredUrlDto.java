@@ -15,6 +15,7 @@ public class MonitoredUrlDto {
             String url,
             boolean isActive,
             String lastStatus,
-            LocalDateTime lastCheckedAt
+            LocalDateTime lastCheckedAt,
+            long totalDowntimeMinutes
     ) {}
 }
