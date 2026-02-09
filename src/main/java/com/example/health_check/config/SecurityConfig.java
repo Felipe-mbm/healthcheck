@@ -29,13 +29,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // 1. O que é público
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+
+                        // 2. O que é só do ADMIN
                         .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/urls").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+
+                        // 3. O que exige apenas estar logado (incluindo suas estatísticas)
                         .requestMatchers(HttpMethod.GET, "/users").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/urls").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/urls/**").authenticated() // O /** cobre /urls e /urls/id/stats
+
+                        // 4. Tranca geral (SEMPRE POR ÚLTIMO)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

@@ -1,11 +1,8 @@
-ALTER TABLE users ADD COLUMN password VARCHAR(255);
-
-ALTER TABLE users ALTER COLUMN password SET NOT NULL;
--- 1. Garante que a coluna password exista
+-- 1. Garante que a coluna password exista (seguindo o padrão da V1)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);
 
--- 2. Atualiza ou insere o admin com o HASH do BCrypt para '123456'
-INSERT INTO users (id, email, password, user_role, checked_interval)
+-- 2. Atualiza ou insere o admin com os nomes de colunas CORRETOS da V1
+INSERT INTO users (id, email, password, role, check_interval)
 VALUES (
            '7da2266a-eb49-4ae6-aa33-05529db2e99b',
            'admin@system.com',
