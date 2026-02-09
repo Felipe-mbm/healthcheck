@@ -2,6 +2,8 @@ package com.example.health_check.service;
 
 import com.example.health_check.dto.MonitoredUrlDto;
 import com.example.health_check.dto.UrlStatisticsDto;
+import com.example.health_check.exception.BusinessError;
+import com.example.health_check.exception.BusinessException;
 import com.example.health_check.mapper.MonitoredUrlMapper;
 import com.example.health_check.model.entity.MonitoredUrl;
 import com.example.health_check.model.entity.Outage;
@@ -28,7 +30,7 @@ public class MonitoredUrlService {
 
     public MonitoredUrlDto.Response register(MonitoredUrlDto.CreateRequest request) {
         if (repository.existsByUrl(request.url())) {
-            throw new RuntimeException("URL already registered in the system!");
+            throw new BusinessException(BusinessError.URL_ALREADY_REGISTERED);
         }
 
         MonitoredUrl entity = mapper.toEntity(request);
@@ -46,7 +48,7 @@ public class MonitoredUrlService {
 
     public UrlStatisticsDto getStatistics(String id) {
         MonitoredUrl url = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("URL not found"));
+                .orElseThrow(() -> new BusinessException(BusinessError.URL_NOT_FOUND));
 
         UrlStatistics stats = statisticsRepository.findByMonitoredUrl(url)
                 .orElseGet(() -> {
@@ -68,7 +70,7 @@ public class MonitoredUrlService {
 
     public void delete(String id) {
         if (!repository.existsById(id))
-            throw new RuntimeException("Not found URL");
+            throw new BusinessException(BusinessError.URL_NOT_FOUND);
         repository.deleteById(id);
     }
 
