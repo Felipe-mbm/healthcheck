@@ -3,13 +3,12 @@ package com.example.health_check.service;
 import com.example.health_check.model.entity.MonitoredUrl;
 import com.example.health_check.model.entity.Outage;
 import com.example.health_check.model.entity.UrlStatistics;
-import com.example.health_check.model.entity.User;
 import com.example.health_check.repository.MonitoredUrlRepository;
 import com.example.health_check.repository.OutageRepository;
 import com.example.health_check.repository.UrlStatisticsRepository;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class HealthCheckService {
 
@@ -25,6 +25,9 @@ public class HealthCheckService {
     private final UrlStatisticsRepository urlStatisticsRepository;
     private final WebClient webClient;
 
+    @Value("${app.http.timeout}")
+    private int timeout;
+
     public HealthCheckService(MonitoredUrlRepository urlRepository, OutageRepository outageRepository, UrlStatisticsRepository urlStatisticsRepository, WebClient webClient) {
         this.urlRepository = urlRepository;
         this.outageRepository = outageRepository;
@@ -32,6 +35,7 @@ public class HealthCheckService {
         this.webClient = webClient;
     }
 
+    @Transactional
     public void checkUrl(MonitoredUrl targetUrl) {
 
         boolean isUp = false;
@@ -42,15 +46,22 @@ public class HealthCheckService {
                     .uri(targetUrl.getUrl())
                     .retrieve()
                     .toBodilessEntity()
+                    .retry(2)
                     .block();
 
-            if (response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection()) {
+            if (response != null && (response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection())) {
                 isUp = true;
             } else {
-                detectedError = "HTTP " + response.getStatusCode().value();
+                detectedError = "HTTP " + (response != null ? response.getStatusCode().value() : "No Response");
             }
         } catch (Exception e) {
             detectedError = e.getMessage();
+
+            if (e.getMessage().contains("Timeout")) {
+                detectedError = "Timeout (Excessive Slowness > " + timeout + "s";
+            } else if (e.getMessage() != null && e.getMessage().contains("Connection refused")) {
+                detectedError = "Connection Refused (Server down)";
+            }
         }
 
         targetUrl.setLastCheckedAt(LocalDateTime.now());
@@ -67,9 +78,9 @@ public class HealthCheckService {
                 newOutage.setReason(detectedError);
                 outageRepository.save(newOutage);
 
-                System.out.println("Site Down: " + targetUrl.getName());
+               log.error("Site Down: {} | Error: {}", targetUrl.getName(), detectedError);
             }
-        } else { // Site está UP
+        } else {
             if (openOutage.isPresent()) {
                 Outage outage = openOutage.get();
                 outage.setEndTime(LocalDateTime.now());
@@ -88,7 +99,7 @@ public class HealthCheckService {
                 stats.setTotalDowntimeSeconds(stats.getTotalDowntimeSeconds() + secondsDown);
                 urlStatisticsRepository.save(stats);
 
-                System.out.println("Estatística atualizada: " + secondsDown + " segundos acumulados.");
+                log.info("Updated statistic: Site {} | Timeout:  {} seconds.", targetUrl.getName(), secondsDown);
             }
         }
     }

@@ -3,7 +3,6 @@ package com.example.health_check.mapper;
 import com.example.health_check.dto.UserDto;
 import com.example.health_check.model.entity.User;
 import com.example.health_check.model.enums.UserRole;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component

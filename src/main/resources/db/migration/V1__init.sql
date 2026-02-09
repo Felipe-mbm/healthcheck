@@ -1,5 +1,3 @@
--- V1: Migration to create the initial database tables
-
 CREATE TABLE users (
     id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL UNIQUE,
