@@ -1,8 +1,7 @@
 package com.example.health_check.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import org.hibernate.validator.constraints.URL; // Importante para validar formato de URL
+import org.hibernate.validator.constraints.URL;
 
 import java.time.LocalDateTime;
 
