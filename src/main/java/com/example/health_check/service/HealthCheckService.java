@@ -6,6 +6,7 @@ import com.example.health_check.model.entity.UrlStatistics;
 import com.example.health_check.repository.MonitoredUrlRepository;
 import com.example.health_check.repository.OutageRepository;
 import com.example.health_check.repository.UrlStatisticsRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class HealthCheckService {
         this.webClient = webClient;
     }
 
+    @Transactional
     public void checkUrl(MonitoredUrl targetUrl) {
 
         boolean isUp = false;
