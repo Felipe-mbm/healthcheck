@@ -3,11 +3,13 @@ package com.example.health_check.scheduler;
 import com.example.health_check.model.entity.MonitoredUrl;
 import com.example.health_check.repository.MonitoredUrlRepository;
 import com.example.health_check.service.HealthCheckService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 public class UrlCheckScheduler {
 
@@ -21,13 +23,13 @@ public class UrlCheckScheduler {
 
     @Scheduled(fixedRateString = "${app.scheduler.interval}")
     public void checkSystemAutomatically() {
-        System.out.println("Starting verification...");
+        log.info("Starting verification...");
 
         try {
             List<MonitoredUrl> urls = urlRepository.findAll();
 
             if (urls.isEmpty()) {
-                System.out.println("No URLs registered to check");
+                log.warn("No URLs registered to check");
                 return;
             }
 
@@ -37,10 +39,9 @@ public class UrlCheckScheduler {
                 }
             });
 
-            System.out.println("Verification completed for " + urls.size() + " sites");
+            log.info("Verification completed for {} sites", urls.size());
         } catch (Exception e) {
-            System.out.println("Critical scheduler failure: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Critical scheduler failure: " + e.getMessage());
         }
     }
 }
