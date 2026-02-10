@@ -25,4 +25,10 @@ public class MonitoredUrlDto {
             LocalDateTime lastCheckedAt,
             long totalDowntimeMinutes
     ) {}
+
+    public record UpdateRequest (
+            String name,
+            String url,
+            Boolean isActive
+    ) {}
 }

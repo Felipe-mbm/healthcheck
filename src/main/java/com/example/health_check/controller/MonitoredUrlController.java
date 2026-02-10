@@ -43,4 +43,10 @@ public class MonitoredUrlController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody MonitoredUrlDto.UpdateRequest request){
+        service.update(id, request);
+        return ResponseEntity.noContent().build();
+    }
 }

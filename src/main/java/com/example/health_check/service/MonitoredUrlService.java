@@ -93,4 +93,15 @@ public class MonitoredUrlService {
         long seconds = totalSeconds % 60;
         return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
+
+    public void update(String id, MonitoredUrlDto.UpdateRequest request) {
+        MonitoredUrl entity = repository.findById(id)
+                .orElseThrow(() -> new BusinessException(BusinessError.URL_NOT_FOUND));
+
+        if(request.name() != null ) entity.setName(request.name());
+        if(request.url() != null) entity.setUrl(request.url());
+        if(request.isActive() != null) entity.setIsActive(request.isActive());
+
+        repository.save(entity);
+    }
 }

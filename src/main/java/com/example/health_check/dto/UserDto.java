@@ -21,4 +21,9 @@ public class UserDto {
             UserRole role,
             LocalDateTime lastActiveAt
     ) {}
+
+    public record UpdateRequest (
+        String email,
+        UserRole role
+    ) {}
 }

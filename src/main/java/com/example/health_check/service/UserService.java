@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UserService {
+public class    UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -40,4 +40,20 @@ public class UserService {
                 .map(userMapper::toResponse)
                 .toList();
     }
+
+    public void update(String id, UserDto.UpdateRequest request){
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(BusinessError.USER_NOT_FOUND));
+        if(request.email() != null && !request.email().equals(user.getEmail())){
+            if(userRepository.findByEmail(request.email()).isPresent()) {
+                throw new BusinessException(BusinessError.EMAIL_ALREADY_REGISTERED);
+            }
+            user.setEmail(request.email());
+        }
+        if (request.role() != null){
+            user.setUserRole(request.role());
+        }
+        userRepository.save(user);
+    }
 }
+

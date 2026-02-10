@@ -35,4 +35,10 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody UserDto.UpdateRequest request){
+        userService.update(id, request);
+        return ResponseEntity.noContent().build();
+    }
 }
