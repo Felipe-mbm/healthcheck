@@ -49,4 +49,9 @@ public class MonitoredUrlController {
         service.update(id, request);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/down")
+    public ResponseEntity<List<MonitoredUrlDto.Response>> listDown() {
+        return ResponseEntity.ok(service.findDownUrls());
+    }
 }
