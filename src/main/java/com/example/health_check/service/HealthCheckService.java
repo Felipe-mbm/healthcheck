@@ -6,10 +6,10 @@ import com.example.health_check.model.entity.UrlStatistics;
 import com.example.health_check.repository.MonitoredUrlRepository;
 import com.example.health_check.repository.OutageRepository;
 import com.example.health_check.repository.UrlStatisticsRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
@@ -24,18 +24,19 @@ public class HealthCheckService {
     private final OutageRepository outageRepository;
     private final UrlStatisticsRepository urlStatisticsRepository;
     private final WebClient webClient;
+    private final TransactionTemplate transactionTemplate;
 
     @Value("${app.http.timeout}")
     private int timeout;
 
-    public HealthCheckService(MonitoredUrlRepository urlRepository, OutageRepository outageRepository, UrlStatisticsRepository urlStatisticsRepository, WebClient webClient) {
+    public HealthCheckService(MonitoredUrlRepository urlRepository, OutageRepository outageRepository, UrlStatisticsRepository urlStatisticsRepository, WebClient webClient, TransactionTemplate transactionTemplate) {
         this.urlRepository = urlRepository;
         this.outageRepository = outageRepository;
         this.urlStatisticsRepository = urlStatisticsRepository;
         this.webClient = webClient;
+        this.transactionTemplate = transactionTemplate;
     }
 
-    @Transactional
     public void checkUrl(MonitoredUrl targetUrl) {
 
         boolean isUp = false;
@@ -64,43 +65,48 @@ public class HealthCheckService {
             }
         }
 
-        targetUrl.setLastCheckedAt(LocalDateTime.now());
-        targetUrl.setLastStatus(isUp ? "UP" : "DOWN");
-        urlRepository.save(targetUrl);
+        final boolean finalIsUp = isUp;
+        final String finalError = detectedError;
 
-        Optional<Outage> openOutage = outageRepository.findByMonitoredUrlAndEndTimeIsNull(targetUrl);
+        transactionTemplate.executeWithoutResult(transactionStatus -> {
+            targetUrl.setLastCheckedAt(LocalDateTime.now());
+            targetUrl.setLastStatus(finalIsUp ? "UP" : "DOWN");
+            urlRepository.save(targetUrl);
 
-        if (!isUp) {
-            if (openOutage.isEmpty()) {
-                Outage newOutage = new Outage();
-                newOutage.setMonitoredUrl(targetUrl);
-                newOutage.setStartTime(LocalDateTime.now());
-                newOutage.setReason(detectedError);
-                outageRepository.save(newOutage);
+            Optional<Outage> openOutage = outageRepository.findByMonitoredUrlAndEndTimeIsNull(targetUrl);
 
-               log.error("Site Down: {} | Error: {}", targetUrl.getName(), detectedError);
+            if (!finalIsUp) {
+                if (openOutage.isEmpty()) {
+                    Outage newOutage = new Outage();
+                    newOutage.setMonitoredUrl(targetUrl);
+                    newOutage.setStartTime(LocalDateTime.now());
+                    newOutage.setReason(finalError);
+                    outageRepository.save(newOutage);
+
+                   log.error("Site Down: {} | Error: {}", targetUrl.getName(), finalError);
+                }
+            } else {
+                if (openOutage.isPresent()) {
+                    Outage outage = openOutage.get();
+                    outage.setEndTime(LocalDateTime.now());
+                    outageRepository.save(outage);
+
+                    long secondsDown = Duration.between(outage.getStartTime(), outage.getEndTime()).toSeconds();
+
+                    UrlStatistics stats = urlStatisticsRepository.findByMonitoredUrl(targetUrl)
+                            .orElseGet(() -> {
+                                UrlStatistics newStats = new UrlStatistics();
+                                newStats.setMonitoredUrl(targetUrl);
+                                return newStats;
+                            });
+
+                    stats.setTotalOutages(stats.getTotalOutages() + 1);
+                    stats.setTotalDowntimeSeconds(stats.getTotalDowntimeSeconds() + secondsDown);
+                    urlStatisticsRepository.save(stats);
+
+                    log.info("Updated statistic: Site {} | Timeout:  {} seconds.", targetUrl.getName(), secondsDown);
+                }
             }
-        } else {
-            if (openOutage.isPresent()) {
-                Outage outage = openOutage.get();
-                outage.setEndTime(LocalDateTime.now());
-                outageRepository.save(outage);
-
-                long secondsDown = Duration.between(outage.getStartTime(), outage.getEndTime()).toSeconds();
-
-                UrlStatistics stats = urlStatisticsRepository.findByMonitoredUrl(targetUrl)
-                        .orElseGet(() -> {
-                            UrlStatistics newStats = new UrlStatistics();
-                            newStats.setMonitoredUrl(targetUrl);
-                            return newStats;
-                        });
-
-                stats.setTotalOutages(stats.getTotalOutages() + 1);
-                stats.setTotalDowntimeSeconds(stats.getTotalDowntimeSeconds() + secondsDown);
-                urlStatisticsRepository.save(stats);
-
-                log.info("Updated statistic: Site {} | Timeout:  {} seconds.", targetUrl.getName(), secondsDown);
-            }
-        }
+        });
     }
 }

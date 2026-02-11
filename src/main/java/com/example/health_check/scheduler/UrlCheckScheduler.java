@@ -8,6 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -33,11 +35,19 @@ public class UrlCheckScheduler {
                 return;
             }
 
-            urls.parallelStream().forEach(url -> {
-                if (Boolean.TRUE.equals(url.getIsActive())) {
-                    healthCheckService.checkUrl(url);
-                }
-            });
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                urls.stream()
+                        .filter(url -> Boolean.TRUE.equals(url.getIsActive()))
+                        .forEach(url -> executor.submit(() -> {
+                            try {
+                                int randomDelay = new java.util.Random().nextInt(10000);
+                                Thread.sleep(randomDelay);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                            healthCheckService.checkUrl(url);
+                        }));
+            }
 
             log.info("Verification completed for {} sites", urls.size());
         } catch (Exception e) {

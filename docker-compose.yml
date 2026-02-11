@@ -12,7 +12,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ID_GOOGLE=${ID_GOOGLE}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:15-alpine
@@ -25,5 +26,10 @@ services:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   postgres-data:

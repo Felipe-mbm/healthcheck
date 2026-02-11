@@ -39,8 +39,15 @@ public class MonitoredUrlService {
         return mapper.toResponse(savedEntity, calculateDowntime(savedEntity));
     }
 
+    public List<MonitoredUrlDto.Response> findDownUrls() {
+        return repository.findDownUrlsWithOutages()
+                .stream()
+                .map(entity -> mapper.toResponse(entity, calculateDowntime(entity)))
+                .toList();
+    }
+
     public List<MonitoredUrlDto.Response> findAll() {
-        return repository.findAll()
+        return repository.findAllWithOutages()
                 .stream()
                 .map(entity -> mapper.toResponse(entity, calculateDowntime(entity)))
                 .toList();
