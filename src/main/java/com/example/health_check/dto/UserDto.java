@@ -23,6 +23,7 @@ public class UserDto {
     ) {}
 
     public record UpdateRequest (
+        @Email(message = "Invalid email format")
         String email,
         UserRole role
     ) {}

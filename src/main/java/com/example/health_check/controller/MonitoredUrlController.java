@@ -45,7 +45,7 @@ public class MonitoredUrlController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody MonitoredUrlDto.UpdateRequest request){
+    public ResponseEntity<Void> update(@PathVariable String id, @Valid @RequestBody MonitoredUrlDto.UpdateRequest request){
         service.update(id, request);
         return ResponseEntity.noContent().build();
     }

@@ -3,6 +3,7 @@ package com.example.health_check.controller;
 import com.example.health_check.dto.UserDto;
 import com.example.health_check.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable String id, @RequestBody UserDto.UpdateRequest request){
+    public ResponseEntity<Void> update(@PathVariable String id, @Valid @RequestBody UserDto.UpdateRequest request){
         userService.update(id, request);
         return ResponseEntity.noContent().build();
     }

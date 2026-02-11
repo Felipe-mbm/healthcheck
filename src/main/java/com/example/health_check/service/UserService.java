@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class    UserService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
