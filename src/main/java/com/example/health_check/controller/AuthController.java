@@ -1,6 +1,8 @@
 package com.example.health_check.controller;
 
 import com.example.health_check.dto.AuthenticationDto;
+import com.example.health_check.exception.BusinessError;
+import com.example.health_check.exception.BusinessException;
 import com.example.health_check.model.entity.User;
 import com.example.health_check.repository.UserRepository;
 import com.example.health_check.service.TokenService;
@@ -53,7 +55,7 @@ public class AuthController {
             String email = payload.getEmail();
 
             User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not registered in the system."));
+                    .orElseThrow(() -> new BusinessException(BusinessError.USER_NOT_FOUND));
 
             String token = tokenService.generateToken(user);
             return ResponseEntity.ok(new LoginResponse(token));

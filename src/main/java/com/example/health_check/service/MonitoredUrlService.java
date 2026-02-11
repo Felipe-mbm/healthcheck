@@ -106,7 +106,11 @@ public class MonitoredUrlService {
                 .orElseThrow(() -> new BusinessException(BusinessError.URL_NOT_FOUND));
 
         if(request.name() != null ) entity.setName(request.name());
-        if(request.url() != null) entity.setUrl(request.url());
+        if(request.url() != null && !request.url().equals(entity.getUrl())) {
+            if (repository.existsByUrl(request.url()))
+                throw new BusinessException(BusinessError.URL_ALREADY_REGISTERED);
+            entity.setUrl(request.url());
+        }
         if(request.isActive() != null) entity.setIsActive(request.isActive());
 
         repository.save(entity);

@@ -28,6 +28,7 @@ public class MonitoredUrlDto {
 
     public record UpdateRequest (
             String name,
+            @URL(message = "Invalid URL format")
             String url,
             Boolean isActive
     ) {}
