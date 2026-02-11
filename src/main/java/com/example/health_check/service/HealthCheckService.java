@@ -8,9 +8,11 @@ import com.example.health_check.repository.OutageRepository;
 import com.example.health_check.repository.UrlStatisticsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -50,11 +52,15 @@ public class HealthCheckService {
                     .retry(2)
                     .block();
 
-            if (response != null && (response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection())) {
+            if (response != null && (response.getStatusCode().is2xxSuccessful() || response.getStatusCode().is3xxRedirection()))
+                isUp = true;
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED || e.getStatusCode() == HttpStatus.FORBIDDEN) {
                 isUp = true;
             } else {
-                detectedError = "HTTP " + (response != null ? response.getStatusCode().value() : "No Response");
+                detectedError = "HTTP " + e.getStatusCode().value();
             }
+
         } catch (Exception e) {
             detectedError = e.getMessage();
 
