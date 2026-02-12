@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    build: ./backend
     container_name: healthcheck-backend
     ports:
       - "8080:8080"
@@ -8,7 +8,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - DATABASE_LOCATION=classpath:db/migration
+      - DATABASE_LOCATION=${DATABASE_LOCATION}
       - JWT_SECRET=${JWT_SECRET}
       - ID_GOOGLE=${ID_GOOGLE}
     depends_on:
