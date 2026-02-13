@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Cores Padrão (Default Theme - Dark Blue/Slate) */
+        --background: 222.2 84% 4.9%;
+        --foreground: 210 40% 98%;
+
+        /* Primary Color (O Azul do botão "Entrar") */
+        --primary: 217.2 91.2% 59.8%;
+        --primary-foreground: 222.2 47.4% 11.2%;
+
+        /* Status Colors */
+        --success: 142 76% 36%; /* Verde */
+        --danger: 0 84% 60%;    /* Vermelho */
+
+        --radius: 0.5rem;
+    }
+
+    /* Exemplo de Tema Alternativo (Cliente Coca-Cola - Vermelho) */
+    [data-theme='red-client'] {
+        --background: 0 0% 0%;
+        --primary: 0 72% 51%;
+        --primary-foreground: 0 0% 100%;
+    }
+}
