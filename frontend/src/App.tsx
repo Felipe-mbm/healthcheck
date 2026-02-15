@@ -1,32 +1,43 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import Login from "./pages/Login"
-import { useEffect } from "react"
-import { currentConfig } from "@/config/branding"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { currentConfig } from "@/config/branding";
 
-function Dashboard() {
-    return <div className="p-8 text-2xl">Bem-vindo ao Dashboard Protegido! 🚀</div>
-}
+// Contextos e Proteção
+import { AuthProvider } from "@/context/AuthContext";
+import { AdminOnly } from "@/components/auth/AdminOnly";
+
+// Páginas
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
 
 function App() {
     useEffect(() => {
         document.title = currentConfig.companyName;
-        document.body.setAttribute('data-theme', currentConfig.theme);
+        if (currentConfig.colors) {
+            document.documentElement.style.setProperty('--color-primary', currentConfig.colors.primary);
+            document.documentElement.style.setProperty('--color-secondary', currentConfig.colors.secondary);
+        }
     }, []);
 
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/login" element={<Login />} />
-
-                {/* Rota Protegida (Simples por enquanto) */}
-                <Route path="/dashboard" element={<Dashboard />} />
-
-                {/* Rota 404 - Redireciona para login */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </BrowserRouter>
-    )
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<Login />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <AdminOnly fallback={<Navigate to="/" replace />}>
+                                <Dashboard />
+                            </AdminOnly>
+                        }
+                    />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
+    );
 }
 
-export default App
+export default App;

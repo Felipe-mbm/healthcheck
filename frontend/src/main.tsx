@@ -3,13 +3,19 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { theme } from "@/config/theme.ts";
 
-// --- MUDE AQUI ---
-// Comente a linha do import.meta
-// const ID_GOOGLE = import.meta.env.VITE_ID_GOOGLE;
+const applyTheme = () => {
+    const root = document.documentElement;
+    if (theme.colors) {
+        root.style.setProperty('--color-primary', theme.colors.primary);
+        root.style.setProperty('--color-secondary', theme.colors.secondary);
+    }
+};
 
-// Cole o ID direto aqui entre aspas (Hardcode)
-const ID_GOOGLE = "665879874118-76vu54pkef7ad1l8qvbuv7ts4rcvbjbh.apps.googleusercontent.com";
+applyTheme();
+
+const ID_GOOGLE = "628891440062-0qu4upbmn7hgs1du1g23d8j9nhd11lk1.apps.googleusercontent.com";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

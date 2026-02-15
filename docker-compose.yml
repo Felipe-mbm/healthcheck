@@ -13,7 +13,7 @@ services:
       - DATABASE_USERNAME=admin
       - DATABASE_PASSWORD=admin
       - JWT_SECRET=segredo_docker_prod
-      - ID_GOOGLE=google_id_docker
+      - ID_GOOGLE=628891440062-0qu4upbmn7hgs1du1g23d8j9nhd11lk1.apps.googleusercontent.com
     depends_on:
       postgres:
         condition: service_healthy

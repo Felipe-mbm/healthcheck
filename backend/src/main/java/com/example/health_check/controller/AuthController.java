@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.example.health_check.dto.UserDto;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
@@ -58,7 +58,13 @@ public class AuthController {
                     .orElseThrow(() -> new BusinessException(BusinessError.USER_NOT_FOUND));
 
             String token = tokenService.generateToken(user);
-            return ResponseEntity.ok(new LoginResponse(token));
+            UserDto.Response userResponse = new UserDto.Response(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getUserRole(),
+                    user.getLastActiveAt()
+            );
+            return ResponseEntity.ok(new LoginResponse(token, userResponse));
 
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
@@ -67,5 +73,4 @@ public class AuthController {
         }
     }
 
-    public record LoginResponse(String token){}
-}
+    public record LoginResponse(String token, UserDto.Response user){}}
