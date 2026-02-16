@@ -2,11 +2,16 @@ import { useState } from "react";
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { currentConfig } from "@/config/branding"; // ✅ Agora será lido no título
 import { useAuth } from "@/context/AuthContext";
+import { theme } from "@/config/theme"; // <--- Usando o tema centralizado
+import { Input } from "@/components/ui/input"; // <--- Usando componente do Shadcn
+import { Button } from "@/components/ui/button"; // <--- Usando componente do Shadcn
+
+// Dica Senior: URL em constante ou ENV
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function Login() {
-    const navigate = useNavigate(); // ✅ Agora será lido no redirecionamento
+    const navigate = useNavigate();
     const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -20,91 +25,93 @@ export default function Login() {
     const handleGoogleSuccess = async (credentialResponse: any) => {
         try {
             setIsLoading(true);
-            const res = await axios.post("http://localhost:8080/auth/login", {
+            const res = await axios.post(`${API_URL}/auth/login`, {
                 credential: credentialResponse.credential
             });
 
-            // ✅ Salvando e atualizando o contexto
             localStorage.setItem("token", res.data.token);
             login(res.data.user);
-
-            // ✅ Resolvendo o erro TS6133: navigate sendo lido aqui
             navigate("/dashboard");
 
         } catch (error) {
             console.error("Erro no login:", error);
-            alert("Falha ao autenticar. Verifique se o e-mail está cadastrado.");
+            alert("Falha ao autenticar.");
+        } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-[#0b1120] text-white p-4 font-sans">
-            <div className="w-full max-w-[400px] bg-[#111827] p-8 rounded-xl border border-gray-800 shadow-2xl">
+        // 1. Fundo usando a cor do tema
+        <div className={`flex min-h-screen w-full items-center justify-center ${theme.colors.background} text-white p-4 font-sans`}>
 
-                {/* Cabeçalho: Resolvendo o erro TS6133 de currentConfig */}
+            {/* 2. Card usando a cor do tema */}
+            <div className={`w-full max-w-[400px] ${theme.colors.cardBg} border ${theme.colors.border} p-8 rounded-xl shadow-2xl`}>
+
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold mb-2 tracking-tight">
-                        {currentConfig.companyName}
+                    <h1 className="text-3xl font-bold mb-2 tracking-tight text-white">
+                        {theme.companyName}
                     </h1>
-                    <p className="text-gray-400 text-sm">Bem-vindo de volta! Faça login para continuar.</p>
+                    <p className={`${theme.colors.textSecondary} text-sm`}>
+                        Bem-vindo de volta! Faça login para continuar.
+                    </p>
                 </div>
 
-                {/* Formulário Profissional */}
                 <form onSubmit={handleEmailLogin} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-                        <input
+                        <label className={`block text-sm font-medium ${theme.colors.textSecondary} mb-1.5`}>Email</label>
+                        {/* 3. Input do Shadcn (Consistência Visual) */}
+                        <Input
                             type="email"
                             placeholder="seu@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#1f2937] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-white transition-all placeholder:text-gray-500"
+                            className={`bg-[#1f2937] border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-${theme.colors.primary}`}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
-                        <input
+                        <label className={`block text-sm font-medium ${theme.colors.textSecondary} mb-1.5`}>Senha</label>
+                        <Input
                             type="password"
                             placeholder="********"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#1f2937] border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-white transition-all placeholder:text-gray-500"
+                            className={`bg-[#1f2937] border-gray-700 text-white placeholder:text-gray-500 focus-visible:ring-${theme.colors.primary}`}
                         />
                     </div>
 
-                    <button
+                    {/* 4. Botão White Label (Usa a cor primária da marca) */}
+                    <Button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors shadow-lg active:scale-[0.98] disabled:opacity-50"
+                        style={{ backgroundColor: theme.colors.primary }} // A mágica acontece aqui
+                        className="w-full py-6 text-black font-bold text-base hover:opacity-90 transition-opacity"
                     >
-                        Entrar
-                    </button>
+                        {isLoading ? "Entrando..." : "Entrar"}
+                    </Button>
                 </form>
 
-                {/* Divisor "OU" conforme a imagem d45081 */}
                 <div className="my-8 flex items-center">
-                    <div className="flex-grow border-t border-gray-800"></div>
+                    <div className={`flex-grow border-t ${theme.colors.border}`}></div>
                     <span className="px-4 text-gray-500 text-xs font-bold uppercase tracking-widest">OU</span>
-                    <div className="flex-grow border-t border-gray-800"></div>
+                    <div className={`flex-grow border-t ${theme.colors.border}`}></div>
                 </div>
 
-                {/* Botão Google - Estilo Outline idêntico ao solicitado */}
                 <div className="flex justify-center overflow-hidden rounded-lg border border-gray-700 hover:border-gray-500 transition-colors">
                     <GoogleLogin
                         onSuccess={handleGoogleSuccess}
                         onError={() => setIsLoading(false)}
                         useOneTap
-                        theme="outline"     // ✅ Fundo transparente e borda fina (image_d4d7a4)
+                        theme="outline"
                         size="large"
                         shape="rectangular"
-                        width="336px"       // Ajustado para o container interno
+                        width="336px"
                         text="signin_with"
                     />
                 </div>
 
                 <p className="text-center text-gray-600 text-[10px] mt-10 uppercase tracking-widest">
-                    © 2026 {currentConfig.companyName}. Todos os direitos reservados.
+                    © 2026 {theme.companyName}. Todos os direitos reservados.
                 </p>
             </div>
         </div>
