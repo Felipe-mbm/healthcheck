@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"; // <--- Usando componente do Shad
 import { Button } from "@/components/ui/button"; // <--- Usando componente do Shadcn
 
 // Dica Senior: URL em constante ou ENV
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.ID_GOOGLE || "http://localhost:8080";
 
 export default function Login() {
     const navigate = useNavigate();

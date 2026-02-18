@@ -1,5 +1,14 @@
 services:
-  # BACKEND (Opcional, pois você vai rodar na IDE)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: healthcheck-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - app
+
   app:
     build:
       context: ./backend
@@ -8,30 +17,29 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Configuração interna da rede do Docker
-      - DATABASE_URL=jdbc:postgresql://postgres:5432/healthcheck_db
-      - DATABASE_USERNAME=admin
-      - DATABASE_PASSWORD=admin
-      - JWT_SECRET=segredo_docker_prod
-      - ID_GOOGLE=628891440062-0qu4upbmn7hgs1du1g23d8j9nhd11lk1.apps.googleusercontent.com
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_LOCATION=${DATABASE_LOCATION}
+      - JWT_SECRET=${JWT_SECRET}
+      - ID_GOOGLE=${ID_GOOGLE}
     depends_on:
       postgres:
         condition: service_healthy
 
-  # BANCO DE DADOS
   postgres:
     image: postgres:15-alpine
     container_name: healthcheck-db
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=healthcheck_db
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d healthcheck_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
