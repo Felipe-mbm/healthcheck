@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface User {
     email: string;
@@ -16,20 +16,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
+    const [user, setUser] = useState<User | null>(() => {
         const storedUser = localStorage.getItem('user');
 
         if (storedUser && storedUser !== "undefined") {
             try {
-                setUser(JSON.parse(storedUser));
+                return JSON.parse(storedUser);
             } catch (error) {
                 console.error("Erro ao carregar usuário do LocalStorage", error);
                 localStorage.removeItem('user');
             }
         }
-    }, []);
+        return null;
+    });
 
     const login = (userData: User) => {
         if (!userData) {
