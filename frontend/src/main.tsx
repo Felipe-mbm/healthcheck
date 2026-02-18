@@ -15,11 +15,9 @@ const applyTheme = () => {
 
 applyTheme();
 
-const ID_GOOGLE = "628891440062-0qu4upbmn7hgs1du1g23d8j9nhd11lk1.apps.googleusercontent.com";
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <GoogleOAuthProvider clientId={ID_GOOGLE}>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_ID_GOOGLE}>
             <App />
         </GoogleOAuthProvider>
     </React.StrictMode>,

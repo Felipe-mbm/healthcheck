@@ -1,14 +1,13 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
-import { theme } from "@/config/theme"; // <--- Usando o tema centralizado
-import { Input } from "@/components/ui/input"; // <--- Usando componente do Shadcn
-import { Button } from "@/components/ui/button"; // <--- Usando componente do Shadcn
+import { theme } from "@/config/theme";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-// Dica Senior: URL em constante ou ENV
-const API_URL = import.meta.env.ID_GOOGLE || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -42,10 +41,8 @@ export default function Login() {
     };
 
     return (
-        // 1. Fundo usando a cor do tema
         <div className={`flex min-h-screen w-full items-center justify-center ${theme.colors.background} text-white p-4 font-sans`}>
 
-            {/* 2. Card usando a cor do tema */}
             <div className={`w-full max-w-[400px] ${theme.colors.cardBg} border ${theme.colors.border} p-8 rounded-xl shadow-2xl`}>
 
                 <div className="text-center mb-10">
@@ -60,7 +57,6 @@ export default function Login() {
                 <form onSubmit={handleEmailLogin} className="space-y-6">
                     <div>
                         <label className={`block text-sm font-medium ${theme.colors.textSecondary} mb-1.5`}>Email</label>
-                        {/* 3. Input do Shadcn (Consistência Visual) */}
                         <Input
                             type="email"
                             placeholder="seu@email.com"
@@ -80,7 +76,6 @@ export default function Login() {
                         />
                     </div>
 
-                    {/* 4. Botão White Label (Usa a cor primária da marca) */}
                     <Button
                         type="submit"
                         disabled={isLoading}
