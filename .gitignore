@@ -4,6 +4,7 @@ backend/target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 backend/.env
+.env
 
 ### STS ###
 .apt_generated
