@@ -9,6 +9,15 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 
 function App() {
+
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'user') {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+    });
+
     useEffect(() => {
         document.title = currentConfig.companyName;
         if (currentConfig.colors) {
