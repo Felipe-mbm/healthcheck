@@ -2,15 +2,22 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { currentConfig } from "@/config/branding";
 
-// Contextos e Proteção
 import { AuthProvider } from "@/context/AuthContext";
-import { AdminOnly } from "@/components/auth/AdminOnly";
+import { PrivateRoute } from "@/components/auth/PrivateRoute";
 
-// Páginas
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 
 function App() {
+
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'user') {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+    });
+
     useEffect(() => {
         document.title = currentConfig.companyName;
         if (currentConfig.colors) {
@@ -25,14 +32,16 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Login />} />
                     <Route path="/login" element={<Login />} />
+
                     <Route
                         path="/dashboard"
                         element={
-                            <AdminOnly fallback={<Navigate to="/" replace />}>
+                            <PrivateRoute>
                                 <Dashboard />
-                            </AdminOnly>
+                            </PrivateRoute>
                         }
                     />
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>
