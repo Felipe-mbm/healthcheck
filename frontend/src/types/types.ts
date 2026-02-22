@@ -1,5 +1,5 @@
 export interface Monitor {
-    id: number;
+    id: string;
     name: string;
     url: string;
     status: 'online' | 'offline' | 'paused' | 'pending';

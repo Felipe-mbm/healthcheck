@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext"; // Seu contexto existente
-import { useMonitors } from "@/hooks/useMonitors"; // O Hook que criamos
-import { theme } from "@/config/theme"; // O Tema White Label
+import { useAuth } from "@/context/AuthContext";
+import { useMonitors } from "@/hooks/useMonitors";
+import { theme } from "@/config/theme";
 import { StatusDot } from "@/components/layout/StatusDot";
 import { CardSummary } from "@/components/layout/CardSummary";
-import { NewMonitorModal } from "@/components/modals/NewMonitorModal.tsx";
+
+// Importação de todos os modais
+import { NewMonitorModal } from "@/components/modals/NewMonitorModal";
+import { EditMonitorModal } from "@/components/modals/EditMonitorModal";
+import { DetailsModal } from "@/components/modals/DetailsModal";
+import { Monitor } from "../types/types";
 
 import {
     Plus, Activity, MoreVertical, Calendar, RefreshCw, Download,
@@ -14,7 +19,6 @@ import {
 export default function Dashboard() {
     const { user } = useAuth();
 
-    // Usando nosso Custom Hook (Toda a lógica complexa está aqui dentro)
     const {
         monitors,
         stats,
@@ -22,12 +26,17 @@ export default function Dashboard() {
         refreshMonitors,
         deleteMonitor,
         toggleStatus,
-        addMonitor
+        addMonitor,
+        editMonitor
     } = useMonitors();
 
     // Estados puramente de UI (Visual)
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+    // Novos estados para controlar a Edição e os Detalhes
+    const [editingSite, setEditingSite] = useState<Monitor | null>(null);
+    const [detailsSiteId, setDetailsSiteId] = useState<string | null>(null);
 
     // --- Handlers de UI ---
     const closeMenu = () => setActiveMenuId(null);
@@ -44,7 +53,6 @@ export default function Dashboard() {
             {/* 2. Controls Toolbar */}
             <div className="max-w-[1400px] mx-auto mb-8 flex flex-col xl:flex-row gap-4 justify-between items-center">
                 <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
-                    {/* Exemplo de DatePicker estático simplificado */}
                     <div className={`flex items-center ${theme.colors.headerBg} ${theme.colors.border} border rounded-lg px-3 py-2`}>
                         <Calendar size={16} className="text-gray-500 mr-2" />
                         <span className="text-sm text-gray-400">Filtro de Data</span>
@@ -109,17 +117,29 @@ export default function Dashboard() {
                                         </button>
                                     </div>
 
+                                    {/* MENU DROPDOWN CONECTADO AOS ESTADOS */}
                                     {activeMenuId === site.id && (
                                         <div className={`absolute right-10 bottom-full mb-2 z-[100] w-48 ${theme.colors.cardBg} border ${theme.colors.border} rounded-lg shadow-2xl py-1 shadow-black/50`} onClick={(e) => e.stopPropagation()}>
                                             <div className="px-3 py-2 border-b border-gray-800 text-xs text-gray-500 uppercase font-semibold">Gerenciar</div>
-                                            <button onClick={() => alert(`Detalhes: ${site.name}`)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2"><Eye size={14} /> Detalhes</button>
-                                            <button onClick={() => alert(`Editar: ${site.name}`)} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2"><Edit2 size={14} /> Editar</button>
-                                            <button onClick={() => { toggleStatus(site.id); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2">
-                                                {site.status === 'paused' ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+
+                                            <button onClick={() => { setDetailsSiteId(site.id as string); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2 transition-colors">
+                                                <Eye size={14} className="mt-0.5" /> Detalhes
+                                            </button>
+
+                                            <button onClick={() => { setEditingSite(site); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2 transition-colors">
+                                                <Edit2 size={14} className="mt-0.5" /> Editar
+                                            </button>
+
+                                            <button onClick={() => { toggleStatus(site.id); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800 flex gap-2 transition-colors">
+                                                {site.status === 'paused' ? <PlayCircle size={14} className="mt-0.5" /> : <PauseCircle size={14} className="mt-0.5" />}
                                                 {site.status === 'paused' ? 'Retomar' : 'Pausar'}
                                             </button>
+
                                             <div className="h-px bg-gray-800 my-1"></div>
-                                            <button onClick={() => { deleteMonitor(site.id); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-900/20 flex gap-2"><Trash2 size={14} /> Excluir</button>
+
+                                            <button onClick={() => { deleteMonitor(site.id); closeMenu(); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-900/20 flex gap-2 transition-colors">
+                                                <Trash2 size={14} className="mt-0.5" /> Excluir
+                                            </button>
                                         </div>
                                     )}
                                 </td>
@@ -130,7 +150,13 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            {/* Componentes Modais Ativados */}
             <NewMonitorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={addMonitor} />
+
+            <EditMonitorModal isOpen={!!editingSite} monitor={editingSite} onClose={() => setEditingSite(null)} onSave={editMonitor} />
+
+            <DetailsModal isOpen={!!detailsSiteId} siteId={detailsSiteId} onClose={() => setDetailsSiteId(null)} />
+
         </div>
     );
 }
