@@ -290,6 +290,49 @@ Os campos `lastStatus` e `lastCheckedAt` são atualizados automaticamente pelo S
 
 ---
 
+# 🖥️ HealthCheck - Frontend (White Label)
+
+Este é o frontend da aplicação de monitoramento de URLs. O projeto foi construído focando em **Clean Code**, **Escalabilidade** e arquitetura **White Label** (fácil customização de marca/cores).
+
+## 🚀 Tecnologias Utilizadas
+
+* **Core:** React 18, TypeScript, Vite.
+* **Estilização:** Tailwind CSS.
+* **UI Components:** Shadcn/UI (Radix UI) + Lucide React (Ícones).
+* **Gerenciamento de Estado:** React Context API (Auth) + Custom Hooks.
+* **Formulários:** React Hook Form.
+* **Autenticação:** Google OAuth (`@react-oauth/google`).
+* **HTTP Client:** Axios.
+
+---
+
+## 📂 Estrutura de Pastas (Arquitetura)
+
+O projeto segue uma estrutura modular para facilitar a manutenção.
+
+```text
+src/
+├── components/          # Componentes visuais
+│   ├── ui/              # Componentes base do Shadcn (Button, Input, Card...)
+│   ├── layout/          # Componentes de estrutura (Header, Sidebar)
+│   └── modals/          # Modais de negócio (ex: NewMonitorModal.tsx)
+│
+├── config/              # Configurações globais
+│   └── theme.ts         # 🎨 ARQUIVO PRINCIPAL DO WHITE LABEL (Cores, Logo, Nome)
+│
+├── context/             # Gerenciamento de estado global
+│   └── AuthContext.tsx  # Guarda o usuário logado e o token JWT
+│
+├── hooks/               # Lógica de negócio separada da UI
+│   └── useMonitors.ts   # Toda a lógica de CRUD de monitores fica aqui
+│
+├── pages/               # Telas da aplicação
+│   ├── Login.tsx        # Tela de Login (Integração Google)
+│   └── Dashboard.tsx    # Painel principal
+│
+└── services/            # Comunicação com o Backend
+    └── api.ts           # Configuração do Axios
+
 ## 📄 Licença
 
 Este projeto é de uso educacional e interno. Adapte conforme a política da sua organização.
