@@ -1,10 +1,33 @@
-# HealthCheck API
+# 🚀 HealthCheck API
+
+[![Java](https://img.shields.io/badge/Java-21-blue?logo=java)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com/)
+
+---
 
 ## 📌 Visão Geral
 
 O **HealthCheck** é uma API RESTful profissional para **monitoramento automatizado de disponibilidade de URLs**, desenvolvida em **Java 21** com **Spring Boot 3.4.1**. O sistema realiza verificações periódicas em URLs cadastradas, identifica quedas (downtime), registra incidentes de forma inteligente e mantém um histórico confiável de indisponibilidade.
 
 O projeto foi pensado com **foco em arquitetura limpa, segurança, escalabilidade e boas práticas corporativas**, seguindo princípios **SOLID**, separação clara de responsabilidades e padrões amplamente utilizados em ambientes de produção.
+
+> ⚠️ **Nota:** Este projeto encontra-se em desenvolvimento contínuo. As funcionalidades core já estão implementadas e possuímos um backlog transparente focado em escalabilidade, resiliência e boas práticas (detalhado na seção de Backlog Técnico).
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+| Categoria | Tecnologias |
+|-----------|------------|
+| **Linguagem & Framework** | Java 21, Spring Boot 3.4.4 |
+| **Banco de Dados** | PostgreSQL 15, Spring Data JPA, Hibernate |
+| **Versionamento de DB** | Flyway |
+| **Segurança** | Spring Security, Auth0 JWT, Google Auth Library (OAuth2) |
+| **Comunicação HTTP** | WebClient Reativo (Spring WebFlux) |
+| **Concorrência** | Virtual Threads (`Executors.newVirtualThreadPerTaskExecutor()`) |
+| **Documentação** | Springdoc OpenAPI (Swagger) |
 
 ---
 
@@ -15,21 +38,23 @@ A aplicação segue o **padrão de arquitetura em camadas**, garantindo baixo ac
 - **Controller**: Exposição das rotas REST
 - **Service**: Regras de negócio e orquestração
 - **Repository**: Persistência de dados
-- **Entity (Model)**: Representação do domínio
+- **Entity & DTO**: Representação do domínio e transferência de dados
+- **Mapper**: Conversão entre Entidades e DTOs
 
 ### 🔐 Segurança e Autenticação
 
 - **Spring Security** com autenticação **Stateless**
 - **JWT (JSON Web Token)** utilizando **Auth0 Java-JWT**
+- Integração com **Google SSO (OAuth2)**
 - Assinatura com algoritmo **HMAC256**
 - Tokens interceptados e validados via `SecurityFilter`
 - Senhas criptografadas com **BCryptPasswordEncoder**
 
 Fluxo resumido:
-1. Usuário realiza login
-2. Token JWT é gerado
-3. Token é enviado no header `Authorization: Bearer <token>`
-4. O filtro valida e autentica a requisição
+1. Usuário realiza login (via credenciais ou Google SSO).
+2. Token JWT interno da aplicação é gerado.
+3. Token é enviado no header `Authorization: Bearer <token>`.
+4. O filtro valida e autentica a requisição.
 
 ### 🛂 Controle de Acesso (RBAC)
 
@@ -37,8 +62,8 @@ Controle de acesso baseado em **Roles** (`UserRole`):
 
 | Role  | Permissões |
 |------|-----------|
-| ADMIN | Criar, listar e deletar usuários e URLs |
-| USER  | Apenas listar recursos |
+| **ADMIN** | Criar, listar e deletar usuários e URLs |
+| **USER** | Apenas listar recursos |
 
 As permissões são aplicadas diretamente nas rotas via Spring Security.
 
@@ -48,53 +73,42 @@ As permissões são aplicadas diretamente nas rotas via Spring Security.
 
 O coração do sistema é o **`UrlCheckScheduler`**:
 
-- Executado automaticamente a cada **60 segundos**
-- Implementado com `@Scheduled(fixedRate = 60000)`
-- Recupera todas as URLs cadastradas no banco
-- Executa verificações simultâneas usando `parallelStream()`
+- Executado automaticamente a cada **60 segundos**.
+- Recupera todas as URLs cadastradas no banco.
+- Executa verificações simultâneas usando **Virtual Threads**, garantindo performance sem bloqueio.
 
 ### 🌐 Lógica de Verificação
-
 A verificação é realizada pelo **`HealthCheckService`**, utilizando **WebClient reativo**:
-
 - **Status 2xx ou 3xx** → URL considerada **UP**
 - **Qualquer outro status ou exceção** (timeout, DNS, conexão) → **DOWN**
 
 ### 🧠 Persistência Inteligente de Falhas
-
 O sistema evita registros duplicados:
-
-- Um registro em `outages` é criado **somente quando uma nova falha é detectada**
-- Se a URL continuar indisponível, **nenhum novo registro é criado**
+- Um registro em `outages` é criado **somente quando uma nova falha é detectada**.
+- Se a URL continuar indisponível, nenhum novo registro é criado.
 - Quando o site volta ao ar:
-  - A falha aberta é localizada
-  - O campo `end_time` é preenchido
-  - O incidente é encerrado corretamente
-
-Isso garante **histórico confiável de downtime**, sem ruído ou dados inflados.
+  - A falha aberta é localizada.
+  - O campo `end_time` é preenchido.
+  - O incidente é encerrado corretamente e as estatísticas globais de downtime são atualizadas.
 
 ---
 
 ## 🗄️ Banco de Dados e Migrações
 
-- **PostgreSQL** como banco relacional
-- **Flyway** para versionamento e controle de schema
+- **PostgreSQL** como banco relacional.
+- **Flyway** para versionamento e controle de schema.
 
 ### Estrutura de Tabelas
-
 - `users`
 - `monitored_urls`
 - `outages`
+- `url_statistics`
 
 ### Migrações
-
-- **V1__init.sql**
-  - Criação das tabelas
-  - Integridade referencial
-  - `CASCADE DELETE` para remover outages ao deletar URLs
-
-- **V2__Add_password_to_users.sql**
-  - Adiciona coluna `password` para autenticação segura
+- **V1__init.sql**: Criação das tabelas e integridade referencial (`CASCADE DELETE`).
+- **V2__Add_password_to_users.sql**: Adiciona coluna de senha.
+- **V3__Remove_auth_and_scheduler_columns.sql**: Limpeza de colunas legadas.
+- **V4__create_url_statistics.sql**: Tabela de estatísticas consolidadas de falhas.
 
 As migrações são executadas automaticamente na inicialização da aplicação.
 
@@ -102,78 +116,72 @@ As migrações são executadas automaticamente na inicialização da aplicação
 
 ## 📁 Estrutura do Projeto
 
-```
+```text
 src/main/java
 ├── config
 │   ├── AppConfig
 │   ├── SecurityConfig
 │   └── SecurityFilter
-│
 ├── controller
 │   ├── AuthController
 │   ├── UserController
 │   └── MonitoredUrlController
-│
 ├── dto
 │   ├── AuthenticationDto
 │   └── UserDto
-│
 ├── mapper
 │   ├── UserMapper
 │   └── MonitoredUrlMapper
-│
 ├── model
 │   ├── entity
 │   │   ├── User
 │   │   ├── MonitoredUrl
+│   │   ├── UrlStatistics
 │   │   └── Outage
 │   └── enums
 │       └── UserRole
-│
 ├── repository
 │   ├── UserRepository
 │   ├── MonitoredUrlRepository
+│   ├── UrlStatisticsRepository
 │   └── OutageRepository
-│
 ├── scheduler
 │   └── UrlCheckScheduler
-│
 ├── service
 │   ├── HealthCheckService
 │   ├── TokenService
 │   └── UserService
-│
 └── resources
     └── db/migration
-```
+    
+# 🚀 Guia de Instalação e Execução
 
----
+## 1️⃣ Clonar o Repositório
 
-## 🚀 Guia de Instalação e Execução
-
-### 1️⃣ Clonar o Repositório
-
-O desenvolvimento ocorre na branch **develop**:
+O desenvolvimento ocorre na branch `develop`:
 
 ```bash
 git clone -b develop https://github.com/felipe-mbm/healthcheck.git
 cd healthcheck
 ```
 
-### 2️⃣ Subir o Banco de Dados
+---
+
+## 2️⃣ Subir o Banco de Dados
 
 O projeto possui `docker-compose.yml` configurado:
 
 ```bash
-docker-compose up -d
+docker-compose up -d postgres
 ```
 
-- PostgreSQL 15 Alpine
-- Porta: `5432`
-- Banco padrão: `healthcheck_db`
+- PostgreSQL 15 Alpine  
+- Porta: 5432  
 - Volume persistente: `postgres-data`
 
-### 3️⃣ Configurar Variáveis de Ambiente
+---
+
+## 3️⃣ Configurar Variáveis de Ambiente
 
 Antes de rodar a aplicação, configure:
 
@@ -183,11 +191,12 @@ DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=postgres
 DATABASE_LOCATION=classpath:db/migration
 JWT_SECRET=sua-chave-secreta-jwt
+ID_GOOGLE=seu-client-id-do-google.apps.googleusercontent.com
 ```
 
-> ⚠️ **Nunca versionar credenciais no repositório**
+---
 
-### 4️⃣ Executar a Aplicação
+## 4️⃣ Executar a Aplicação
 
 Com **Java 21** instalado:
 
@@ -195,15 +204,18 @@ Com **Java 21** instalado:
 ./mvnw spring-boot:run
 ```
 
-O Flyway aplicará automaticamente as migrações ao iniciar.
+- Flyway aplicará as migrações automaticamente  
+- API disponível em: http://localhost:8080  
+- Swagger UI: http://localhost:8080/swagger-ui.html  
 
 ---
 
-## 🧪 Guia de Testes (Postman)
+# 🧪 Guia de Testes (Postman)
 
-### ⚠️ Criação do Primeiro Admin
+## ⚠️ Criação do Primeiro Admin
 
-A rota de criação de usuários é protegida. Crie o primeiro ADMIN manualmente:
+A rota de criação de usuários é protegida.  
+Crie o primeiro ADMIN manualmente:
 
 ```sql
 INSERT INTO users (id, email, password, role, check_interval)
@@ -216,11 +228,9 @@ VALUES (
 );
 ```
 
-> Alternativamente, libere temporariamente a rota `/users` no `SecurityConfig`.
-
 ---
 
-### 🔑 Autenticação
+## 🔑 Autenticação
 
 **POST** `/auth/login`
 
@@ -231,35 +241,30 @@ VALUES (
 }
 ```
 
-Resposta:
+**Resposta:**
+
 ```json
-{ "token": "eyJhbGciOi..." }
+{
+  "token": "eyJhbGciOi..."
+}
 ```
 
 Use este token como **Bearer Token** nas próximas requisições.
 
 ---
 
-### 👤 Gerenciamento de Usuários (ADMIN)
+## 👤 Gerenciamento de Usuários (ADMIN)
 
-- **Criar usuário**: `POST /users`
-- **Listar usuários**: `GET /users`
-- **Deletar usuário**: `DELETE /users/{id}`
-
-```json
-{
-  "email": "user@test.com",
-  "password": "123",
-  "role": "USER"
-}
-```
+- `POST /users` (Criar)  
+- `GET /users` (Listar)  
+- `DELETE /users/{id}` (Deletar)  
 
 ---
 
-### 🌍 Gerenciamento de URLs (ADMIN)
+## 🌍 Gerenciamento de URLs (ADMIN)
 
-- **Cadastrar URL**: `POST /urls`
-- **Listar URLs**: `GET /urls`
+- `POST /urls` (Cadastrar)  
+- `GET /urls` (Listar)  
 
 ```json
 {
@@ -268,72 +273,53 @@ Use este token como **Bearer Token** nas próximas requisições.
 }
 ```
 
-Os campos `lastStatus` e `lastCheckedAt` são atualizados automaticamente pelo Scheduler.
+---
 
-### 🔻 Simular Queda
+# 📋 Backlog Técnico e Melhorias Mapeadas (Tech Debt)
 
-- Cadastre uma URL inválida
-- Aguarde 1 minuto
-- Consulte:
-  - Logs da aplicação
-  - Tabela `outages` no banco
+## 1. Banco de Dados e Performance
+
+- Indexação para colunas muito consultadas (ex: `existsByUrl`)  
+- Soft Delete com coluna `deleted_at`  
+- Otimização de consultas (ex: `findAllByIsActiveTrue`)  
 
 ---
 
-## ✅ Status do Projeto
+## 2. Resiliência e Monitoramento (Scheduler)
 
-✔ Arquitetura sólida
-✔ Segurança corporativa
-✔ Monitoramento automático
-✔ Persistência confiável de falhas
-✔ Pronto para ambientes reais
+- Substituir `fixedRate` por `fixedDelay`  
+- Melhorar gerenciamento de threads (Bean/constante)  
+- Uso de `@Transactional` para consistência  
 
 ---
 
-# 🖥️ HealthCheck - Frontend (White Label)
+## 3. Refatoração de Código e Boas Práticas
 
-Este é o frontend da aplicação de monitoramento de URLs. O projeto foi construído focando em **Clean Code**, **Escalabilidade** e arquitetura **White Label** (fácil customização de marca/cores).
-
-## 🚀 Tecnologias Utilizadas
-
-* **Core:** React 18, TypeScript, Vite.
-* **Estilização:** Tailwind CSS.
-* **UI Components:** Shadcn/UI (Radix UI) + Lucide React (Ícones).
-* **Gerenciamento de Estado:** React Context API (Auth) + Custom Hooks.
-* **Formulários:** React Hook Form.
-* **Autenticação:** Google OAuth (`@react-oauth/google`).
-* **HTTP Client:** Axios.
+- Testes unitários com JUnit e Mockito  
+- Separação de DTOs (Request/Response)  
+- Regras de negócio fora de Controllers  
+- Logs transacionais  
 
 ---
 
-## 📂 Estrutura de Pastas (Arquitetura)
+## 4. Segurança e Fluxo de Autenticação
 
-O projeto segue uma estrutura modular para facilitar a manutenção.
+- Separar login e cadastro  
+- Melhorar tratamento de JWT  
+- Ajustes de timezone  
 
-```text
-src/
-├── components/          # Componentes visuais
-│   ├── ui/              # Componentes base do Shadcn (Button, Input, Card...)
-│   ├── layout/          # Componentes de estrutura (Header, Sidebar)
-│   └── modals/          # Modais de negócio (ex: NewMonitorModal.tsx)
-│
-├── config/              # Configurações globais
-│   └── theme.ts         # 🎨 ARQUIVO PRINCIPAL DO WHITE LABEL (Cores, Logo, Nome)
-│
-├── context/             # Gerenciamento de estado global
-│   └── AuthContext.tsx  # Guarda o usuário logado e o token JWT
-│
-├── hooks/               # Lógica de negócio separada da UI
-│   └── useMonitors.ts   # Toda a lógica de CRUD de monitores fica aqui
-│
-├── pages/               # Telas da aplicação
-│   ├── Login.tsx        # Tela de Login (Integração Google)
-│   └── Dashboard.tsx    # Painel principal
-│
-└── services/            # Comunicação com o Backend
-    └── api.ts           # Configuração do Axios
+---
 
-## 📄 Licença
+# ✅ Status do Projeto
 
-Este projeto é de uso educacional e interno. Adapte conforme a política da sua organização.
+- ✔️ Arquitetura sólida e Clean Code  
+- ✔️ Segurança corporativa  
+- ✔️ Monitoramento automático e concorrente  
+- ✔️ Persistência confiável de falhas  
 
+---
+
+## ⏳ Em Progresso
+
+- Resolução de backlog técnico  
+- Implementação de testes  
