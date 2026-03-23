@@ -48,10 +48,9 @@ A aplicação segue o **padrão de arquitetura em camadas**, garantindo baixo ac
 - Integração com **Google SSO (OAuth2)**
 - Assinatura com algoritmo **HMAC256**
 - Tokens interceptados e validados via `SecurityFilter`
-- Senhas criptografadas com **BCryptPasswordEncoder**
 
 Fluxo resumido:
-1. Usuário realiza login (via credenciais ou Google SSO).
+1. Usuário realiza login (via Google SSO).
 2. Token JWT interno da aplicação é gerado.
 3. Token é enviado no header `Authorization: Bearer <token>`.
 4. O filtro valida e autentica a requisição.
@@ -218,13 +217,10 @@ A rota de criação de usuários é protegida.
 Crie o primeiro ADMIN manualmente:
 
 ```sql
-INSERT INTO users (id, email, password, role, check_interval)
+INSERT INTO users (email, role)
 VALUES (
-  gen_random_uuid(),
   'admin@test.com',
-  '$2a$10$HASH_GERADO_PELO_BCRYPT',
   'ADMIN',
-  1
 );
 ```
 
@@ -237,7 +233,6 @@ VALUES (
 ```json
 {
   "email": "admin@test.com",
-  "password": "123"
 }
 ```
 
